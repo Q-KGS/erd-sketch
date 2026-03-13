@@ -1,5 +1,6 @@
 package com.erdsketch.version;
 
+import com.erdsketch.common.exception.ResourceNotFoundException;
 import com.erdsketch.document.DocumentRepository;
 import com.erdsketch.document.ErdDocument;
 import com.erdsketch.user.User;
@@ -27,7 +28,7 @@ public class DocumentVersionService {
     public DocumentVersionResponse createVersion(UUID documentId, CreateVersionRequest request, UUID userId) {
         ErdDocument doc = findAndCheck(documentId, userId);
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("User", userId));
 
         int nextVersionNumber = versionRepository
                 .findTopByDocumentIdOrderByVersionNumberDesc(documentId)
@@ -57,7 +58,7 @@ public class DocumentVersionService {
     public DocumentVersionResponse getVersion(UUID documentId, UUID versionId, UUID userId) {
         findAndCheck(documentId, userId);
         DocumentVersion version = versionRepository.findById(versionId)
-                .orElseThrow(() -> new IllegalArgumentException("Version not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Version", versionId));
         if (!version.getDocument().getId().equals(documentId)) {
             throw new IllegalArgumentException("Version does not belong to this document");
         }
@@ -68,7 +69,7 @@ public class DocumentVersionService {
     public DocumentVersionResponse restoreVersion(UUID documentId, UUID versionId, UUID userId) {
         ErdDocument doc = findAndCheck(documentId, userId);
         DocumentVersion version = versionRepository.findById(versionId)
-                .orElseThrow(() -> new IllegalArgumentException("Version not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Version", versionId));
         if (!version.getDocument().getId().equals(documentId)) {
             throw new IllegalArgumentException("Version does not belong to this document");
         }
@@ -82,7 +83,7 @@ public class DocumentVersionService {
 
     ErdDocument findAndCheck(UUID documentId, UUID userId) {
         ErdDocument doc = documentRepository.findById(documentId)
-                .orElseThrow(() -> new IllegalArgumentException("Document not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Document", documentId));
         checkAccess(doc.getProject().getWorkspace().getId(), userId);
         return doc;
     }

@@ -1,5 +1,7 @@
 package com.erdsketch.auth;
 
+import com.erdsketch.common.exception.DuplicateResourceException;
+import com.erdsketch.common.exception.ResourceNotFoundException;
 import com.erdsketch.user.User;
 import com.erdsketch.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +23,7 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new DuplicateResourceException("Email already exists: " + request.email());
         }
         User user = User.builder()
                 .email(request.email())
@@ -55,7 +57,7 @@ public class AuthService {
 
     public UserResponse getMe(UUID userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("User", userId));
         return UserResponse.from(user);
     }
 

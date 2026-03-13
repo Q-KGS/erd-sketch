@@ -1,5 +1,7 @@
 package com.erdsketch.workspace;
 
+import com.erdsketch.common.exception.DuplicateResourceException;
+import com.erdsketch.common.exception.ResourceNotFoundException;
 import com.erdsketch.config.EmailService;
 import com.erdsketch.user.User;
 import com.erdsketch.user.UserRepository;
@@ -27,7 +29,7 @@ public class WorkspaceService {
     @Transactional
     public WorkspaceResponse create(CreateWorkspaceRequest request, UUID ownerId) {
         if (workspaceRepository.existsBySlug(request.slug())) {
-            throw new IllegalArgumentException("Slug already taken");
+            throw new DuplicateResourceException("Slug already taken: " + request.slug());
         }
         User owner = userRepository.getReferenceById(ownerId);
         Workspace workspace = Workspace.builder()
@@ -56,7 +58,7 @@ public class WorkspaceService {
     public WorkspaceResponse get(UUID workspaceId, UUID userId) {
         checkMemberAccess(workspaceId, userId);
         Workspace ws = workspaceRepository.findById(workspaceId)
-                .orElseThrow(() -> new IllegalArgumentException("Workspace not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Workspace", workspaceId));
         return WorkspaceResponse.from(ws);
     }
 
@@ -64,7 +66,7 @@ public class WorkspaceService {
     public WorkspaceResponse update(UUID workspaceId, UpdateWorkspaceRequest request, UUID userId) {
         checkAdminAccess(workspaceId, userId);
         Workspace ws = workspaceRepository.findById(workspaceId)
-                .orElseThrow(() -> new IllegalArgumentException("Workspace not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Workspace", workspaceId));
         if (request.name() != null) ws.setName(request.name());
         return WorkspaceResponse.from(ws);
     }
@@ -85,10 +87,10 @@ public class WorkspaceService {
     public WorkspaceMemberResponse inviteMember(UUID workspaceId, InviteMemberRequest request, UUID inviterId) {
         checkAdminAccess(workspaceId, inviterId);
         User invitee = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + request.email()));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + request.email()));
         User inviter = userRepository.getReferenceById(inviterId);
         Workspace workspace = workspaceRepository.findById(workspaceId)
-                .orElseThrow(() -> new IllegalArgumentException("Workspace not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Workspace", workspaceId));
         WorkspaceMember member = WorkspaceMember.builder()
                 .workspace(workspace)
                 .user(invitee)
@@ -116,7 +118,7 @@ public class WorkspaceService {
     public WorkspaceMemberResponse updateMemberRole(UUID workspaceId, UUID targetUserId, WorkspaceRole newRole, UUID requesterId) {
         checkAdminAccess(workspaceId, requesterId);
         WorkspaceMember member = memberRepository.findByWorkspaceIdAndUserId(workspaceId, targetUserId)
-                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
         member.setRole(newRole);
         return WorkspaceMemberResponse.from(member);
     }
@@ -125,7 +127,7 @@ public class WorkspaceService {
     public void removeMember(UUID workspaceId, UUID targetUserId, UUID requesterId) {
         checkAdminAccess(workspaceId, requesterId);
         WorkspaceMember member = memberRepository.findByWorkspaceIdAndUserId(workspaceId, targetUserId)
-                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
         memberRepository.delete(member);
     }
 

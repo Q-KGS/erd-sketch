@@ -1,5 +1,6 @@
 package com.erdsketch.comment;
 
+import com.erdsketch.common.exception.ResourceNotFoundException;
 import com.erdsketch.document.DocumentRepository;
 import com.erdsketch.document.ErdDocument;
 import com.erdsketch.user.User;
@@ -27,7 +28,7 @@ public class CommentService {
     public CommentResponse create(UUID documentId, CreateCommentRequest request, UUID userId) {
         ErdDocument doc = findDocAndCheck(documentId, userId);
         User author = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("User", userId));
 
         CommentTargetType targetType;
         try {
@@ -74,7 +75,7 @@ public class CommentService {
     @Transactional
     public CommentResponse update(UUID commentId, UpdateCommentRequest request, UUID userId) {
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("Comment not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Comment", commentId));
 
         if (!comment.getAuthor().getId().equals(userId)) {
             throw new AccessDeniedException("Only the author can update this comment");
@@ -87,7 +88,7 @@ public class CommentService {
     @Transactional
     public void delete(UUID commentId, UUID userId) {
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("Comment not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Comment", commentId));
 
         if (!comment.getAuthor().getId().equals(userId)) {
             throw new AccessDeniedException("Only the author can delete this comment");
@@ -99,7 +100,7 @@ public class CommentService {
     @Transactional
     public CommentResponse resolve(UUID commentId, UUID userId, boolean resolved) {
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("Comment not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Comment", commentId));
 
         checkAccess(comment.getDocument().getProject().getWorkspace().getId(), userId);
 
@@ -116,14 +117,14 @@ public class CommentService {
 
     private ErdDocument findDocAndCheck(UUID documentId, UUID userId) {
         ErdDocument doc = documentRepository.findById(documentId)
-                .orElseThrow(() -> new IllegalArgumentException("Document not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Document", documentId));
         checkAccess(doc.getProject().getWorkspace().getId(), userId);
         return doc;
     }
 
     private void checkDocAccess(UUID documentId, UUID userId) {
         ErdDocument doc = documentRepository.findById(documentId)
-                .orElseThrow(() -> new IllegalArgumentException("Document not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Document", documentId));
         checkAccess(doc.getProject().getWorkspace().getId(), userId);
     }
 

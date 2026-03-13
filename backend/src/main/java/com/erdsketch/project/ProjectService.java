@@ -1,5 +1,6 @@
 package com.erdsketch.project;
 
+import com.erdsketch.common.exception.ResourceNotFoundException;
 import com.erdsketch.user.User;
 import com.erdsketch.user.UserRepository;
 import com.erdsketch.workspace.Workspace;
@@ -46,7 +47,7 @@ public class ProjectService {
 
     public ProjectResponse get(UUID projectId, UUID userId) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Project", projectId));
         checkAccess(project.getWorkspace().getId(), userId);
         return ProjectResponse.from(project);
     }
@@ -54,7 +55,7 @@ public class ProjectService {
     @Transactional
     public ProjectResponse update(UUID projectId, UpdateProjectRequest request, UUID userId) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Project", projectId));
         checkAccess(project.getWorkspace().getId(), userId);
         if (request.name() != null) project.setName(request.name());
         if (request.description() != null) project.setDescription(request.description());
@@ -65,7 +66,7 @@ public class ProjectService {
     @Transactional
     public void delete(UUID projectId, UUID userId) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Project", projectId));
         checkAccess(project.getWorkspace().getId(), userId);
         projectRepository.delete(project);
     }

@@ -1,5 +1,6 @@
 package com.erdsketch.document;
 
+import com.erdsketch.common.exception.ResourceNotFoundException;
 import com.erdsketch.project.Project;
 import com.erdsketch.project.ProjectRepository;
 import com.erdsketch.workspace.WorkspaceMemberRepository;
@@ -22,7 +23,7 @@ public class DocumentService {
     @Transactional
     public DocumentResponse create(UUID projectId, CreateDocumentRequest request, UUID userId) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Project", projectId));
         checkAccess(project.getWorkspace().getId(), userId);
         ErdDocument doc = ErdDocument.builder()
                 .project(project)
@@ -34,7 +35,7 @@ public class DocumentService {
 
     public List<DocumentResponse> list(UUID projectId, UUID userId) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Project", projectId));
         checkAccess(project.getWorkspace().getId(), userId);
         return documentRepository.findByProjectId(projectId)
                 .stream().map(DocumentResponse::from).toList();
@@ -59,14 +60,14 @@ public class DocumentService {
     @Transactional
     public void updateYjsState(UUID documentId, byte[] yjsState, String schemaSnapshot) {
         ErdDocument doc = documentRepository.findById(documentId)
-                .orElseThrow(() -> new IllegalArgumentException("Document not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Document", documentId));
         doc.setYjsState(yjsState);
         doc.setSchemaSnapshot(schemaSnapshot);
     }
 
     ErdDocument findAndCheck(UUID documentId, UUID userId) {
         ErdDocument doc = documentRepository.findById(documentId)
-                .orElseThrow(() -> new IllegalArgumentException("Document not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Document", documentId));
         checkAccess(doc.getProject().getWorkspace().getId(), userId);
         return doc;
     }

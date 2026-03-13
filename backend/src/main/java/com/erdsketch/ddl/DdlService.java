@@ -1,5 +1,6 @@
 package com.erdsketch.ddl;
 
+import com.erdsketch.common.exception.ResourceNotFoundException;
 import com.erdsketch.document.*;
 import com.erdsketch.document.DocumentRepository;
 import com.erdsketch.workspace.WorkspaceMemberRepository;
@@ -63,7 +64,7 @@ public class DdlService {
 
     private ErdDocument findAndCheck(UUID documentId, UUID userId) {
         ErdDocument doc = documentRepository.findById(documentId)
-                .orElseThrow(() -> new IllegalArgumentException("Document not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Document", documentId));
         if (!memberRepository.existsByWorkspaceIdAndUserId(doc.getProject().getWorkspace().getId(), userId)) {
             throw new AccessDeniedException("Access denied");
         }
