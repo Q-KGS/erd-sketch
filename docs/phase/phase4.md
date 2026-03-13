@@ -289,9 +289,13 @@ psql -U erdsketch -d test_migration -c "\d+ users"
 
 ## 6. 완료 기준 (Definition of Done)
 
-- [ ] 버전 저장/복원 통합 테스트 (B-VER-01 ~ B-VER-08) 통과
-- [ ] 댓글 CRUD 통합 테스트 (B-CMT-01 ~ B-CMT-11) 통과
-- [ ] 스키마 Diff 단위 테스트 (B-DIFF-01 ~ B-DIFF-08) 통과
+- [x] 버전 저장/복원 통합 테스트 (B-VER-01 ~ B-VER-08) 통과
+- [x] 댓글 CRUD 통합 테스트 (B-CMT-01 ~ B-CMT-11) 통과
+- [x] 스키마 Diff 단위 테스트 (B-DIFF-01 ~ B-DIFF-08) 통과
+- [x] 마이그레이션 DDL 단위 테스트 (B-MIG-01 ~ B-MIG-07) 통과
+- [x] PDF 내보내기 단위 테스트 (B-PDF-01 ~ B-PDF-04) 통과
+- [x] 버전 히스토리 패널 단위 테스트 (F-VER-01 ~ F-VER-05) 통과
+- [x] 댓글 패널 단위 테스트 (F-CMT-01 ~ F-CMT-05) 통과
 - [ ] E2E-VER-01 (버전 복원) 수동 검증 완료
 - [ ] E2E-CMT-01 (댓글 + 실시간 표시) 수동 검증 완료
 - [ ] E2E-DIFF-02 마이그레이션 DDL 실제 DB 실행 성공

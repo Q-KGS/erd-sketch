@@ -300,7 +300,12 @@ void parseDbml_withReference_createsRelationship() {
 ## 7. 완료 기준 (Definition of Done)
 
 - [ ] OAuth Google/GitHub E2E 플로우 수동 검증 완료
-- [ ] DBML 가져오기/내보내기 단위 테스트 (B-DBML-01 ~ B-DBML-08) 통과
+- [x] DBML 가져오기/내보내기 단위 테스트 (B-DBML-01 ~ B-DBML-08) 통과
+- [x] OAuth 단위 테스트 (B-OAUTH-01 ~ B-OAUTH-06) 통과
+- [x] JDBC 스키마 추출 단위 테스트 (B-JDBC-01 ~ B-JDBC-09) 통과 (H2 기반)
+- [x] 프로젝트 템플릿 단위 테스트 (B-TPL-01 ~ B-TPL-05) 통과
+- [x] 다크 모드 단위 테스트 (F-DARK-01 ~ F-DARK-05) 통과
+- [x] 팔로우 모드 단위 테스트 (F-FOLLOW-01 ~ F-FOLLOW-04) 통과
 - [ ] DBML 내보내기 파일을 dbdiagram.io에서 에러 없이 로드 확인
 - [ ] 다크 모드 에디터 전체 페이지 시각적 검토 완료
 - [ ] E2E-TPL-01 (e-commerce 템플릿) FK 관계 포함 정상 생성

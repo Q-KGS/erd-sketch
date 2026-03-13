@@ -17,8 +17,18 @@ spring:
     show-sql: false
   flyway:
     enabled: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.oauth2.client.reactive.ReactiveOAuth2ClientAutoConfiguration
+  security:
+    oauth2:
+      client:
+        registration: {}
 
 app:
+  oauth:
+    enabled: false
   jwt:
     secret: test-secret-key-for-unit-tests-must-be-at-least-256-bits-long-padding-here
     access-token-expiry: 3600000

@@ -30,8 +30,14 @@ public class User {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
-    @Column(name = "password_hash", nullable = false)
+    @Column(name = "password_hash")
     private String passwordHash;
+
+    @Column(name = "oauth_provider")
+    private String oauthProvider;
+
+    @Column(name = "oauth_subject")
+    private String oauthSubject;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
