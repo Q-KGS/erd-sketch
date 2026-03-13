@@ -10,6 +10,9 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
+    "test:e2e:ci": "playwright test --reporter=github",
+    "test:e2e:integration": "playwright test --config=playwright.config.integration.ts",
+    "test:e2e:integration:ci": "playwright test --config=playwright.config.integration.ts --reporter=github",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc --noEmit"
   },
