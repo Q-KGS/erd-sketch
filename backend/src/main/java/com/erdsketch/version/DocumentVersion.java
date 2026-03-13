@@ -31,7 +31,7 @@ public class DocumentVersion {
     @Column(name = "version_number", nullable = false)
     private Integer versionNumber;
 
-    @Column(name = "yjs_state")
+    @Column(name = "yjs_state", columnDefinition = "BYTEA")
     private byte[] yjsState;
 
     @JdbcTypeCode(SqlTypes.JSON)

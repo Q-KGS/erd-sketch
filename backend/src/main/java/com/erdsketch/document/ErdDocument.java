@@ -31,7 +31,7 @@ public class ErdDocument {
     @Column(nullable = false)
     private String name;
 
-    @Column(name = "yjs_state")
+    @Column(name = "yjs_state", columnDefinition = "BYTEA")
     private byte[] yjsState;
 
     @JdbcTypeCode(SqlTypes.JSON)
