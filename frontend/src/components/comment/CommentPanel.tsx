@@ -94,7 +94,7 @@ export default function CommentPanel({ documentId }: Props) {
         {comments.map(comment => (
           <li key={comment.id} className={`text-xs border rounded p-2 ${comment.resolved ? 'opacity-50' : ''}`}>
             <div className="flex items-center justify-between">
-              <span className="font-semibold">{comment.author.displayName}</span>
+              <span className="font-semibold">{comment.authorDisplayName}</span>
               <span className="text-gray-400">{new Date(comment.createdAt).toLocaleString('ko-KR')}</span>
             </div>
             <p className={`mt-1 ${comment.resolved ? 'line-through' : ''}`}>{comment.content}</p>
@@ -147,7 +147,7 @@ export default function CommentPanel({ documentId }: Props) {
                 {comment.replies.map(reply => (
                   <li key={reply.id} className={`text-xs border rounded p-2 ${reply.resolved ? 'opacity-50' : ''}`}>
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold">{reply.author.displayName}</span>
+                      <span className="font-semibold">{reply.authorDisplayName}</span>
                       <span className="text-gray-400">{new Date(reply.createdAt).toLocaleString('ko-KR')}</span>
                     </div>
                     <p className={reply.resolved ? 'line-through' : ''}>{reply.content}</p>

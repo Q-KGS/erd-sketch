@@ -9,7 +9,7 @@ vi.mock('@/api/comment', () => ({
       id: 'cmt-new',
       documentId: docId,
       authorId: 'u1',
-      author: { id: 'u1', email: 'a@a.com', displayName: 'Alice', createdAt: '' },
+      authorDisplayName: 'Alice',
       targetType: data.targetType,
       content: data.content,
       resolved: false,
@@ -28,14 +28,14 @@ import { commentApi } from '@/api/comment'
 const mockComments: Comment[] = [
   {
     id: 'cmt-1', documentId: 'doc-1', authorId: 'u1',
-    author: { id: 'u1', email: 'a@a.com', displayName: 'Alice', createdAt: '' },
+    authorDisplayName: 'Alice',
     targetType: 'CANVAS', content: '첫 번째 댓글', resolved: false,
     createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z',
     replies: [],
   },
   {
     id: 'cmt-2', documentId: 'doc-1', authorId: 'u2',
-    author: { id: 'u2', email: 'b@b.com', displayName: 'Bob', createdAt: '' },
+    authorDisplayName: 'Bob',
     targetType: 'CANVAS', content: '두 번째 댓글', resolved: true,
     createdAt: '2024-01-02T00:00:00Z', updatedAt: '2024-01-02T00:00:00Z',
     replies: [],

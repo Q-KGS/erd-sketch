@@ -147,7 +147,7 @@ export interface Comment {
   id: string
   documentId: string
   authorId: string
-  author: User
+  authorDisplayName: string
   targetType: CommentTargetType
   targetId?: string
   content: string
