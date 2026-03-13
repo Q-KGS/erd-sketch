@@ -11,30 +11,36 @@ interface Props {
 }
 
 export default function DdlPreviewPanel({ schema, documentId }: Props) {
-  const { targetDbType } = useEditorStore()
+  const { targetDbType, selectedId, selectionType } = useEditorStore()
   const [ddl, setDdl] = useState('')
   const [dialect, setDialect] = useState<DbType>(targetDbType)
   const [warnings, setWarnings] = useState<string[]>([])
   const [isPending, setIsPending] = useState(false)
 
+  const selectedTableId = selectionType === 'table' ? selectedId : null
+
   const generateDdl = useCallback(async () => {
     setIsPending(true)
+    const tableIds = selectedTableId ? [selectedTableId] : undefined
     try {
-      const data = await documentApi.generateDdl(documentId, { dialect, includeDrops: false, schema })
+      const data = await documentApi.generateDdl(documentId, { dialect, includeDrops: false, schema, tableIds })
       setDdl(data.ddl)
       setWarnings(data.warnings)
     } catch {
       // 백엔드 API 실패 시 클라이언트 사이드 DDL 생성
-      const result = generateDdlLocal(schema, dialect)
+      const filteredSchema: ErdSchema = tableIds
+        ? { ...schema, tables: Object.fromEntries(tableIds.map((id) => [id, schema.tables[id]]).filter(([, t]) => t)) }
+        : schema
+      const result = generateDdlLocal(filteredSchema, dialect)
       setDdl(result.ddl)
       setWarnings(result.warnings.length > 0 ? result.warnings : [])
-      if (Object.keys(schema.tables).length > 0) {
+      if (Object.keys(filteredSchema.tables).length > 0) {
         toast('백엔드 연결 없이 로컬에서 DDL을 생성했습니다.', { icon: 'ℹ️' })
       }
     } finally {
       setIsPending(false)
     }
-  }, [dialect, documentId, schema])
+  }, [dialect, documentId, schema, selectedTableId])
 
   useEffect(() => {
     generateDdl()
@@ -55,11 +61,20 @@ export default function DdlPreviewPanel({ schema, documentId }: Props) {
     URL.revokeObjectURL(url)
   }
 
+  const selectedTableName = selectedTableId ? schema.tables[selectedTableId]?.name : null
+
   return (
     <aside className="w-96 bg-white border-l border-gray-200 flex flex-col overflow-hidden">
       <div className="p-3 border-b border-gray-100 flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold text-gray-500 uppercase">DDL 미리보기</span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 min-w-0">
+          <span className="text-xs font-semibold text-gray-500 uppercase shrink-0">DDL</span>
+          {selectedTableName ? (
+            <span className="text-xs text-primary-600 font-medium truncate">— {selectedTableName}</span>
+          ) : (
+            <span className="text-xs text-gray-400 truncate">— 전체</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
           <select
             value={dialect}
             onChange={(e) => setDialect(e.target.value as DbType)}
@@ -74,6 +89,12 @@ export default function DdlPreviewPanel({ schema, documentId }: Props) {
           <button onClick={downloadSql} className="text-xs px-2 py-1 bg-primary-50 text-primary-700 hover:bg-primary-100 rounded">다운로드</button>
         </div>
       </div>
+
+      {!selectedTableId && Object.keys(schema.tables).length > 0 && (
+        <div className="px-3 py-1.5 bg-blue-50 border-b border-blue-100">
+          <p className="text-xs text-blue-600">테이블을 선택하면 해당 테이블의 DDL만 표시됩니다.</p>
+        </div>
+      )}
 
       {warnings.length > 0 && (
         <div className="px-3 py-2 bg-yellow-50 border-b border-yellow-100">
