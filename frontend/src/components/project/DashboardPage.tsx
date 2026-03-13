@@ -91,10 +91,25 @@ export default function DashboardPage() {
     qc.clear()
   }
 
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-20 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+      <aside className={`
+        fixed md:static inset-y-0 left-0 z-30
+        w-64 bg-white border-r border-gray-200 flex flex-col
+        transform transition-transform duration-200 ease-in-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
         <div className="p-4 border-b border-gray-200">
           <h1 className="text-xl font-bold text-primary-600">ErdSketch</h1>
         </div>
@@ -138,7 +153,21 @@ export default function DashboardPage() {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 md:ml-0 overflow-y-auto">
+        {/* Mobile top bar */}
+        <div className="flex items-center gap-3 p-4 bg-white border-b border-gray-200 md:hidden">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100"
+            aria-label="메뉴 열기"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <h1 className="text-lg font-bold text-primary-600">ErdSketch</h1>
+        </div>
+        <div className="p-4 sm:p-6 lg:p-8">
         {selectedWorkspace ? (
           <>
             <div className="flex items-center justify-between mb-6">
@@ -192,6 +221,7 @@ export default function DashboardPage() {
             </button>
           </div>
         )}
+        </div>
       </main>
 
       {showCreateWorkspace && (
