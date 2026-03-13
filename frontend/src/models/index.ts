@@ -163,6 +163,7 @@ export interface DdlGenerateRequest {
   dialect: DbType
   tableIds?: string[]
   includeDrops: boolean
+  schema?: ErdSchema
 }
 
 export interface DdlGenerateResponse {

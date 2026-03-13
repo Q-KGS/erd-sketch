@@ -20,7 +20,7 @@ export default function DdlPreviewPanel({ schema, documentId }: Props) {
   const generateDdl = useCallback(async () => {
     setIsPending(true)
     try {
-      const data = await documentApi.generateDdl(documentId, { dialect, includeDrops: false })
+      const data = await documentApi.generateDdl(documentId, { dialect, includeDrops: false, schema })
       setDdl(data.ddl)
       setWarnings(data.warnings)
     } catch {

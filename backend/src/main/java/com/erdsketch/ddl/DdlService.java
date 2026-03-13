@@ -32,7 +32,16 @@ public class DdlService {
         }
 
         try {
-            Map<String, Object> schema = objectMapper.readValue(snapshot, new TypeReference<>() {});
+            // 요청에 스키마가 포함된 경우 우선 사용, 없으면 DB 스냅샷 파싱
+            Map<String, Object> schema;
+            if (request.schema() != null && !request.schema().isEmpty()) {
+                schema = request.schema();
+            } else {
+                schema = objectMapper.readValue(snapshot, new TypeReference<>() {});
+            }
+            if (schema == null) {
+                return new DdlGenerateResponse("-- No schema defined yet", List.of());
+            }
             List<String> warnings = new ArrayList<>();
             String ddl = switch (request.dialect()) {
                 case POSTGRESQL -> postgresGenerator.generate(schema, request.tableIds(), request.includeDrops(), warnings);
