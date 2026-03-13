@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: erdsketch-postgres
+    environment:
+      POSTGRES_DB: erdsketch
+      POSTGRES_USER: erdsketch
+      POSTGRES_PASSWORD: erdsketch
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U erdsketch"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: erdsketch-backend
+    environment:
+      DB_USERNAME: erdsketch
+      DB_PASSWORD: erdsketch
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/erdsketch
+      JWT_SECRET: change-me-in-production-must-be-at-least-256-bits
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: erdsketch-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

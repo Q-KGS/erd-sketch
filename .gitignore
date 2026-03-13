@@ -1,0 +1,23 @@
+# Node
+node_modules/
+dist/
+.env
+.env.local
+
+# Java
+target/
+*.class
+*.jar
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Docker
+.docker/

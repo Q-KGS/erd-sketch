@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:erdsketch_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;INIT=CREATE DOMAIN IF NOT EXISTS JSONB AS CLOB
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  h2:
+    console:
+      enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: false
+    show-sql: false
+  flyway:
+    enabled: false
+
+app:
+  jwt:
+    secret: test-secret-key-for-unit-tests-must-be-at-least-256-bits-long-padding-here
+    access-token-expiry: 3600000
+    refresh-token-expiry: 2592000000
