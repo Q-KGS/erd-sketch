@@ -95,6 +95,7 @@ class AuthServiceTest {
 | B-DDL-10 | 빈 스키마 DDL 생성 | `tables: {}` | `-- No schema defined yet` |
 | B-DDL-11 | 특수 문자 테이블명 | `name: 'user-data'` | 식별자 이스케이프 `"user-data"` |
 | B-DDL-12 | 테이블 설명 | `comment: "사용자 테이블"` | `COMMENT ON TABLE` 포함 |
+| B-DDL-13 | 컬럼 주석 | `comment: "이메일 주소"` | `COMMENT ON COLUMN "t"."col" IS '...'` 포함 |
 
 ```java
 // 예시: PostgreSqlDdlGeneratorTest

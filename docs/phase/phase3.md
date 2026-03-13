@@ -35,6 +35,7 @@ Phase 1, 2 완료 기준 충족
 | B-MYSQL-09 | includeDrops | `DROP TABLE IF EXISTS \`users\`` 선행 |
 | B-MYSQL-10 | 테이블 설명 | `` COMMENT='...' `` 테이블 옵션 |
 | B-MYSQL-11 | `SET FOREIGN_KEY_CHECKS` | 시작/끝에 0/1 설정 |
+| B-MYSQL-12 | 컬럼 주석 | `` COMMENT 'text' `` 컬럼 정의 인라인 |
 
 ```java
 @Test
@@ -71,6 +72,8 @@ void generate_autoIncrementBigint_producesBigintAutoIncrement() {
 | B-MSSQL-05 | UUID → UNIQUEIDENTIFIER | `UNIQUEIDENTIFIER` |
 | B-MSSQL-06 | JSONB → NVARCHAR(MAX) | `NVARCHAR(MAX)` |
 | B-MSSQL-07 | 대괄호 식별자 이스케이프 | `[order]` (예약어 처리) |
+| B-MSSQL-08 | 테이블 주석 | `sp_addextendedproperty N'MS_Description'` 테이블 레벨 |
+| B-MSSQL-09 | 컬럼 주석 | `sp_addextendedproperty N'MS_Description'` 컬럼 레벨 |
 
 ### 1.4 DDL 파서 (`DdlParserService`)
 
