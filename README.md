@@ -180,6 +180,14 @@ WS /ws/documents/{documentId}
 
 ---
 
+## 배포
+
+프로덕션 환경은 Fly.io에 운영 중입니다: **https://erdsketch.fly.dev**
+
+배포 전략, 헬스체크, 자동 롤백, 운영 명령어 등 상세 내용은 [docs/deployment.md](docs/deployment.md)를 참조하세요.
+
+---
+
 ## 구현 로드맵
 
 | Phase | 기간 | 내용 | 상태 |
