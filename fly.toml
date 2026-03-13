@@ -35,6 +35,3 @@ primary_region = "nrt"
   cpu_kind = "shared"
   cpus = 1
 
-[[mounts]]
-  source = "erdsketch_data"
-  destination = "/data"
