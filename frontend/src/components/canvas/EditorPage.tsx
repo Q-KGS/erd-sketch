@@ -23,6 +23,8 @@ import TableEditorPanel from '../editor/TableEditorPanel'
 import RelationshipEditorPanel from '../editor/RelationshipEditorPanel'
 import DdlPreviewPanel from '../ddl/DdlPreviewPanel'
 import CollaborationPresence from '../collaboration/CollaborationPresence'
+import VersionHistoryPanel from '../version/VersionHistoryPanel'
+import CommentPanel from '../comment/CommentPanel'
 import { applyAutoLayout } from '@/utils/autoLayout'
 import type { TableDef, RelationshipDef } from '@/models'
 
@@ -39,7 +41,7 @@ export default function EditorPage() {
 
 function EditorCanvas() {
   const { documentId, projectId, workspaceId } = useParams<{ documentId: string; projectId: string; workspaceId: string }>()
-  const { setDocument, setSelection, selectedId, selectionType, isDdlPanelOpen } = useEditorStore()
+  const { setDocument, setSelection, selectedId, selectionType, isDdlPanelOpen, isCommentPanelOpen, isVersionPanelOpen, toggleCommentPanel, toggleVersionPanel } = useEditorStore()
   const { user } = useAuthStore()
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
@@ -177,6 +179,27 @@ function EditorCanvas() {
     }
   }, [project?.name])
 
+  const handleExportPdf = useCallback(async () => {
+    if (!documentId) return
+    try {
+      const token = useAuthStore.getState().tokens?.accessToken
+      const res = await fetch(`/api/v1/documents/${documentId}/export/pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error('PDF 생성 실패')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${project?.name ?? 'erdsketch'}_${new Date().toISOString().slice(0, 10)}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+      toast.success('PDF로 내보냈습니다.')
+    } catch {
+      toast.error('PDF 내보내기에 실패했습니다.')
+    }
+  }, [documentId, project?.name])
+
   const handleNodeDragStop = useCallback(
     (_: React.MouseEvent, node: Node) => {
       if (isReadOnly) return
@@ -200,11 +223,17 @@ function EditorCanvas() {
         targetDbType={project?.targetDbType ?? 'POSTGRESQL'}
         isConnected={isConnected}
         isReadOnly={isReadOnly}
+        isVersionPanelOpen={isVersionPanelOpen}
+        isCommentPanelOpen={isCommentPanelOpen}
         onAutoLayout={handleAutoLayout}
         onAddTable={handleAddTable}
         onExportJson={handleExportJson}
         onExportPng={handleExportPng}
+        onExportPdf={handleExportPdf}
+        onToggleVersion={toggleVersionPanel}
+        onToggleComment={toggleCommentPanel}
         awareness={awareness}
+        documentId={documentId ?? ''}
       />
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 relative" ref={canvasRef}>
@@ -242,6 +271,18 @@ function EditorCanvas() {
 
         {isDdlPanelOpen && (
           <DdlPreviewPanel schema={schema} documentId={documentId!} />
+        )}
+
+        {isVersionPanelOpen && documentId && (
+          <div className="w-72 border-l border-gray-200 bg-white overflow-y-auto">
+            <VersionHistoryPanel documentId={documentId} />
+          </div>
+        )}
+
+        {isCommentPanelOpen && documentId && (
+          <div className="w-72 border-l border-gray-200 bg-white overflow-y-auto">
+            <CommentPanel documentId={documentId} />
+          </div>
         )}
       </div>
     </div>

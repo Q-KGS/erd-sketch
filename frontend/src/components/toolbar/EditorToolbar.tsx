@@ -8,16 +8,24 @@ interface Props {
   targetDbType: DbType
   isConnected: boolean
   isReadOnly: boolean
+  isVersionPanelOpen: boolean
+  isCommentPanelOpen: boolean
   onAutoLayout: () => void
   onAddTable: () => void
   onExportJson: () => void
   onExportPng: () => void
+  onExportPdf: () => void
+  onToggleVersion: () => void
+  onToggleComment: () => void
   awareness: Awareness | null
+  documentId: string
 }
 
 export default function EditorToolbar({
   projectName, targetDbType, isConnected, isReadOnly,
-  onAutoLayout, onAddTable, onExportJson, onExportPng,
+  isVersionPanelOpen, isCommentPanelOpen,
+  onAutoLayout, onAddTable, onExportJson, onExportPng, onExportPdf,
+  onToggleVersion, onToggleComment,
 }: Props) {
   const { toggleDdlPanel, isDdlPanelOpen } = useEditorStore()
   const [exportMenuOpen, setExportMenuOpen] = useState(false)
@@ -69,6 +77,20 @@ export default function EditorToolbar({
       )}
 
       <button
+        onClick={onToggleVersion}
+        className={`px-3 py-1.5 text-sm rounded-lg ${isVersionPanelOpen ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}
+      >
+        버전
+      </button>
+
+      <button
+        onClick={onToggleComment}
+        className={`px-3 py-1.5 text-sm rounded-lg ${isCommentPanelOpen ? 'bg-green-100 text-green-700' : 'text-gray-600 hover:bg-gray-100'}`}
+      >
+        댓글
+      </button>
+
+      <button
         onClick={onAutoLayout}
         className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
         title="자동 레이아웃"
@@ -115,6 +137,15 @@ export default function EditorToolbar({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               PNG
+            </button>
+            <button
+              onClick={() => { onExportPdf(); setExportMenuOpen(false) }}
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+            >
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              PDF
             </button>
           </div>
         )}
