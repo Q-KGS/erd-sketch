@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import toast from 'react-hot-toast'
 import { documentApi } from '@/api/document'
 import type { DocumentVersion } from '@/models'
 
@@ -15,7 +16,7 @@ export default function VersionHistoryPanel({ documentId }: Props) {
   useEffect(() => {
     documentApi.listVersions(documentId)
       .then(setVersions)
-      .catch(console.error)
+      .catch(() => toast.error('버전 히스토리를 불러오는 데 실패했습니다.'))
   }, [documentId])
 
   const handleSave = async () => {
@@ -25,17 +26,19 @@ export default function VersionHistoryPanel({ documentId }: Props) {
       setVersions(updated)
       setLabel('')
       setShowSaveForm(false)
-    } catch (e) {
-      console.error(e)
+      toast.success('버전이 저장되었습니다.')
+    } catch {
+      toast.error('버전 저장에 실패했습니다.')
     }
   }
 
   const handleRestore = async (versionId: string) => {
-    if (!window.confirm('이 버전으로 복원하시겠습니까?')) return
+    if (!window.confirm('이 버전으로 복원하시겠습니까? 현재 작업 내용이 대체됩니다.')) return
     try {
       await documentApi.restoreVersion(documentId, versionId)
-    } catch (e) {
-      console.error(e)
+      toast.success('버전이 복원되었습니다. 페이지를 새로고침하면 반영됩니다.')
+    } catch {
+      toast.error('버전 복원에 실패했습니다.')
     }
   }
 

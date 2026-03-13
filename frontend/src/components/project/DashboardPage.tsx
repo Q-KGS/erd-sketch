@@ -64,7 +64,16 @@ export default function DashboardPage() {
       setShowInviteMember(false)
       toast.success('멤버를 초대했습니다.')
     },
-    onError: () => toast.error('초대에 실패했습니다. 이메일을 확인해주세요.'),
+    onError: (error: unknown) => {
+      const detail = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      if (detail?.includes('User not found')) {
+        toast.error('해당 이메일로 가입된 계정을 찾을 수 없습니다.')
+      } else if (detail?.includes('already')) {
+        toast.error('이미 워크스페이스 멤버입니다.')
+      } else {
+        toast.error('멤버 초대에 실패했습니다. 잠시 후 다시 시도해주세요.')
+      }
+    },
   })
 
   const openDocument = async (project: Project) => {

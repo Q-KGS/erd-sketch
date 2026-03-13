@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import toast from 'react-hot-toast'
 import { commentApi } from '@/api/comment'
 import type { Comment } from '@/models'
 
@@ -16,7 +17,7 @@ export default function CommentPanel({ documentId }: Props) {
   const loadComments = (resolved?: boolean) => {
     commentApi.list(documentId, resolved)
       .then(setComments)
-      .catch(console.error)
+      .catch(() => toast.error('댓글을 불러오는 데 실패했습니다.'))
   }
 
   useEffect(() => {
@@ -30,8 +31,8 @@ export default function CommentPanel({ documentId }: Props) {
       await commentApi.create(documentId, { targetType: 'CANVAS', content })
       setContent('')
       loadComments(onlyUnresolved ? false : undefined)
-    } catch (e) {
-      console.error(e)
+    } catch {
+      toast.error('댓글 전송에 실패했습니다.')
     }
   }
 
@@ -42,8 +43,8 @@ export default function CommentPanel({ documentId }: Props) {
       setReplyContent('')
       setReplyParentId(null)
       loadComments(onlyUnresolved ? false : undefined)
-    } catch (e) {
-      console.error(e)
+    } catch {
+      toast.error('답글 전송에 실패했습니다.')
     }
   }
 
@@ -51,8 +52,8 @@ export default function CommentPanel({ documentId }: Props) {
     try {
       await commentApi.resolve(commentId)
       loadComments(onlyUnresolved ? false : undefined)
-    } catch (e) {
-      console.error(e)
+    } catch {
+      toast.error('댓글 해결 처리에 실패했습니다.')
     }
   }
 

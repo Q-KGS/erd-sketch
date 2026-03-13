@@ -18,7 +18,14 @@ export default function LoginPage() {
       setAuth(data.user, data.tokens)
       navigate('/')
     },
-    onError: () => toast.error('로그인에 실패했습니다.'),
+    onError: (error: unknown) => {
+      const detail = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      if (detail === 'Invalid credentials') {
+        toast.error('이메일 또는 비밀번호가 올바르지 않습니다.')
+      } else {
+        toast.error('로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+      }
+    },
   })
 
   return (

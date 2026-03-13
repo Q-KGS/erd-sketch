@@ -16,7 +16,14 @@ export default function RegisterPage() {
       setAuth(data.user, data.tokens)
       navigate('/')
     },
-    onError: () => toast.error('회원가입에 실패했습니다.'),
+    onError: (error: unknown) => {
+      const detail = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      if (detail === 'Email already exists') {
+        toast.error('이미 사용 중인 이메일입니다.')
+      } else {
+        toast.error('회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+      }
+    },
   })
 
   return (

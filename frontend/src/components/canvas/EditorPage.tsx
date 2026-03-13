@@ -173,7 +173,7 @@ function EditorCanvas() {
       a.click()
       toast.success('PNG로 내보냈습니다.')
     } catch {
-      toast.error('PNG 내보내기에 실패했습니다.')
+      toast.error('PNG 내보내기에 실패했습니다. 캔버스에 테이블이 있는지 확인해주세요.')
     }
   }, [project?.name])
 
