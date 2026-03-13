@@ -54,12 +54,14 @@ public class MySqlDdlGenerator {
             boolean isUnique = (boolean) col.getOrDefault("isUnique", false);
             boolean isAutoIncrement = (boolean) col.getOrDefault("isAutoIncrement", false);
             String defaultVal = (String) col.get("defaultValue");
+            String colComment = (String) col.get("comment");
 
             StringBuilder colDef = new StringBuilder("    `").append(colName).append("` ").append(dataType);
             if (!nullable) colDef.append(" NOT NULL");
             if (isAutoIncrement) colDef.append(" AUTO_INCREMENT");
             if (defaultVal != null && !defaultVal.isEmpty()) colDef.append(" DEFAULT ").append(defaultVal);
             if (isUnique && !isPk) colDef.append(" UNIQUE");
+            if (colComment != null && !colComment.isEmpty()) colDef.append(" COMMENT '").append(colComment.replace("'", "\\'")).append("'");
 
             colDefs.add(colDef.toString());
             if (isPk) pkColumns.add("`" + colName + "`");

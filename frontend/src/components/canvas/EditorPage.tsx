@@ -170,7 +170,7 @@ function EditorCanvas() {
         </div>
 
         {selectedTable && (
-          <TableEditorPanel table={selectedTable} ydoc={ydoc} />
+          <TableEditorPanel key={selectedTable.id} table={selectedTable} ydoc={ydoc} />
         )}
 
         {selectedRelationship && (

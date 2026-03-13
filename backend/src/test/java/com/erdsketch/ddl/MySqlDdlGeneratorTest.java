@@ -176,6 +176,26 @@ class MySqlDdlGeneratorTest {
         assertThat(ddl).contains("COMMENT='사용자 테이블'");
     }
 
+    // B-MYSQL-12: 컬럼 주석 → COMMENT 'text' per column
+    @Test
+    void B_MYSQL_12_컬럼_주석() {
+        Map<String, Object> colWithComment = new LinkedHashMap<>();
+        colWithComment.put("id", UUID.randomUUID().toString());
+        colWithComment.put("name", "email");
+        colWithComment.put("dataType", "VARCHAR");
+        colWithComment.put("nullable", true);
+        colWithComment.put("isPrimaryKey", false);
+        colWithComment.put("isUnique", false);
+        colWithComment.put("isAutoIncrement", false);
+        colWithComment.put("order", 0);
+        colWithComment.put("comment", "이메일 주소");
+
+        var schema = buildSchema("users", List.of(colWithComment));
+        String ddl = generator.generate(schema, null, false, new ArrayList<>());
+
+        assertThat(ddl).contains("COMMENT '이메일 주소'");
+    }
+
     // B-MYSQL-11: SET FOREIGN_KEY_CHECKS 시작/끝에 0/1 설정
     @Test
     void B_MYSQL_11_SET_FOREIGN_KEY_CHECKS_wrap() {

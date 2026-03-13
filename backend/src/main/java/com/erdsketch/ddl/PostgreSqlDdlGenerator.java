@@ -78,7 +78,6 @@ public class PostgreSqlDdlGenerator {
             if (!nullable && !isPk) colDef.append(" NOT NULL");
             if (defaultVal != null && !defaultVal.isEmpty()) colDef.append(" DEFAULT ").append(defaultVal);
             if (isUnique && !isPk) colDef.append(" UNIQUE");
-            if (colComment != null) colDef.append(" -- ").append(colComment);
 
             colDefs.add(colDef.toString());
             if (isPk) pkColumns.add(quoteIdentifier(colName));
@@ -93,6 +92,16 @@ public class PostgreSqlDdlGenerator {
         if (comment != null && !comment.isEmpty()) {
             sb.append("COMMENT ON TABLE ").append(quoteIdentifier(tableName))
               .append(" IS '").append(comment.replace("'", "''")).append("';\n");
+        }
+
+        // Column comments
+        for (Map<String, Object> col : columns) {
+            String colComment = (String) col.get("comment");
+            if (colComment != null && !colComment.isEmpty()) {
+                sb.append("COMMENT ON COLUMN ").append(quoteIdentifier(tableName))
+                  .append(".").append(quoteIdentifier((String) col.get("name")))
+                  .append(" IS '").append(colComment.replace("'", "''")).append("';\n");
+            }
         }
 
         // Indexes

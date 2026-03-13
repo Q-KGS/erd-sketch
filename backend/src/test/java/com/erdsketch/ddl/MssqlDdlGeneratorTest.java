@@ -112,6 +112,49 @@ class MssqlDdlGeneratorTest {
         assertThat(warnings.stream().anyMatch(w -> w.contains("JSONB") || w.contains("NVARCHAR(MAX)"))).isTrue();
     }
 
+    // B-MSSQL-08: 테이블 주석 → sp_addextendedproperty
+    @Test
+    void B_MSSQL_08_테이블_주석_sp_addextendedproperty() {
+        String tableId = UUID.randomUUID().toString();
+        Map<String, Object> table = new LinkedHashMap<>();
+        table.put("id", tableId);
+        table.put("name", "users");
+        table.put("columns", List.of(col("id", "INTEGER", false, true, false, false)));
+        table.put("indexes", new ArrayList<>());
+        table.put("comment", "사용자 테이블");
+        Map<String, Object> schema = new LinkedHashMap<>();
+        schema.put("tables", Map.of(tableId, table));
+        schema.put("relationships", Map.of());
+
+        String ddl = generator.generate(schema, null, false, new ArrayList<>());
+
+        assertThat(ddl).contains("sp_addextendedproperty");
+        assertThat(ddl).contains("N'MS_Description'");
+        assertThat(ddl).contains("사용자 테이블");
+    }
+
+    // B-MSSQL-09: 컬럼 주석 → sp_addextendedproperty with COLUMN
+    @Test
+    void B_MSSQL_09_컬럼_주석_sp_addextendedproperty() {
+        Map<String, Object> colWithComment = new LinkedHashMap<>();
+        colWithComment.put("id", UUID.randomUUID().toString());
+        colWithComment.put("name", "email");
+        colWithComment.put("dataType", "VARCHAR");
+        colWithComment.put("nullable", true);
+        colWithComment.put("isPrimaryKey", false);
+        colWithComment.put("isUnique", false);
+        colWithComment.put("isAutoIncrement", false);
+        colWithComment.put("order", 0);
+        colWithComment.put("comment", "이메일 주소");
+
+        var schema = buildSchema("users", List.of(colWithComment));
+        String ddl = generator.generate(schema, null, false, new ArrayList<>());
+
+        assertThat(ddl).contains("sp_addextendedproperty");
+        assertThat(ddl).contains("N'COLUMN'");
+        assertThat(ddl).contains("이메일 주소");
+    }
+
     // B-MSSQL-07: includeDrops=true → IF OBJECT_ID(...) IS NOT NULL DROP TABLE [users]
     @Test
     void B_MSSQL_07_includeDrops_true_IF_OBJECT_ID() {

@@ -74,8 +74,8 @@ function generateColumnDef(col: ColumnDef, dialect: DbType): string {
     parts.push(`DEFAULT ${col.defaultValue}`)
   }
 
-  if (col.comment && (dialect === 'MSSQL')) {
-    // MSSQL comments are added separately; skip inline
+  if (col.comment && dialect === 'MYSQL') {
+    parts.push(`COMMENT '${col.comment.replace(/'/g, "\\'")}'`)
   }
 
   return '  ' + parts.join(' ')
@@ -121,9 +121,20 @@ function generateCreateTable(table: TableDef, dialect: DbType, warnings: string[
   // Column comments for PostgreSQL/Oracle
   if (dialect === 'POSTGRESQL' || dialect === 'ORACLE') {
     for (const col of table.columns) {
-      const effectiveComment = col.comment || col.logicalName
-      if (effectiveComment) {
-        ddl += `\nCOMMENT ON COLUMN ${tableName}.${q(col.name, dialect)} IS '${effectiveComment.replace(/'/g, "''")}';`
+      if (col.comment) {
+        ddl += `\nCOMMENT ON COLUMN ${tableName}.${q(col.name, dialect)} IS '${col.comment.replace(/'/g, "''")}';`
+      }
+    }
+  }
+
+  // MSSQL: table and column comments via sp_addextendedproperty
+  if (dialect === 'MSSQL') {
+    if (table.comment) {
+      ddl += `\nEXEC sp_addextendedproperty N'MS_Description', N'${table.comment.replace(/'/g, "''")}', N'SCHEMA', N'dbo', N'TABLE', N'${table.name.replace(/'/g, "''")}';`
+    }
+    for (const col of table.columns) {
+      if (col.comment) {
+        ddl += `\nEXEC sp_addextendedproperty N'MS_Description', N'${col.comment.replace(/'/g, "''")}', N'SCHEMA', N'dbo', N'TABLE', N'${table.name.replace(/'/g, "''")}', N'COLUMN', N'${col.name.replace(/'/g, "''")}';`
       }
     }
   }

@@ -220,6 +220,17 @@ class PostgreSqlDdlGeneratorTest {
         assertThat(ddl).contains("사용자 테이블");
     }
 
+    // B-DDL-13: 컬럼 주석 → COMMENT ON COLUMN
+    @Test
+    void B_DDL_13_컬럼_주석() {
+        var schema = buildSchema("users",
+                List.of(col("email", "VARCHAR", false, false, false, false, null, "이메일 주소")));
+        String ddl = generator.generate(schema, null, false, new ArrayList<>());
+
+        assertThat(ddl).contains("COMMENT ON COLUMN \"users\".\"email\" IS '이메일 주소'");
+        assertThat(ddl).doesNotContain("-- 이메일 주소");
+    }
+
     // 추가: tableIds 필터링
     @Test
     void tableIds_필터링() {

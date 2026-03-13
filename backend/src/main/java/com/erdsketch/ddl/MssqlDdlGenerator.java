@@ -50,6 +50,7 @@ public class MssqlDdlGenerator {
     private void generateTableDdl(StringBuilder sb, Map<String, Object> table, List<String> warnings) {
         String tableName = (String) table.get("name");
         List<Map<String, Object>> columns = (List<Map<String, Object>>) table.getOrDefault("columns", List.of());
+        String tableComment = (String) table.get("comment");
 
         sb.append("CREATE TABLE ").append(quoteIdentifier(tableName)).append(" (\n");
 
@@ -81,6 +82,25 @@ public class MssqlDdlGenerator {
         }
 
         sb.append(String.join(",\n", colDefs)).append("\n);\n");
+
+        // Table comment via extended property
+        if (tableComment != null && !tableComment.isEmpty()) {
+            sb.append("EXEC sp_addextendedproperty N'MS_Description', N'")
+              .append(tableComment.replace("'", "''"))
+              .append("', N'SCHEMA', N'dbo', N'TABLE', N'").append(tableName.replace("'", "''")).append("';\n");
+        }
+
+        // Column comments via extended property
+        for (Map<String, Object> col : columns) {
+            String colComment = (String) col.get("comment");
+            String colName = (String) col.get("name");
+            if (colComment != null && !colComment.isEmpty()) {
+                sb.append("EXEC sp_addextendedproperty N'MS_Description', N'")
+                  .append(colComment.replace("'", "''"))
+                  .append("', N'SCHEMA', N'dbo', N'TABLE', N'").append(tableName.replace("'", "''"))
+                  .append("', N'COLUMN', N'").append(colName.replace("'", "''")).append("';\n");
+            }
+        }
     }
 
     @SuppressWarnings("unchecked")
