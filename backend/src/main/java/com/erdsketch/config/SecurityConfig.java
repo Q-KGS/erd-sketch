@@ -54,6 +54,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/oauth/**", "/login/oauth2/**").permitAll()
+                .requestMatchers("/", "/index.html", "/assets/**", "/*.js", "/*.css", "/*.ico", "/*.png", "/*.svg").permitAll()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex

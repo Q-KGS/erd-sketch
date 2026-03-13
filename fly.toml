@@ -1,0 +1,28 @@
+app = "erdsketch"
+primary_region = "nrt"
+
+[build]
+
+[env]
+  SPRING_PROFILES_ACTIVE = "fly"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 200
+    soft_limit = 150
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
+
+[[mounts]]
+  source = "erdsketch_data"
+  destination = "/data"
