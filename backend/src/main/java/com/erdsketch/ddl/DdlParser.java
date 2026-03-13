@@ -23,14 +23,16 @@ public class DdlParser {
         List<Map<String, Object>> relationships = new ArrayList<>();
         List<String> warnings = new ArrayList<>();
         Map<String, Map<String, Object>> tablesByName = new LinkedHashMap<>();
+        // Collect inline FK constraints from CREATE TABLE for deferred resolution
+        List<Object[]> deferredFks = new ArrayList<>();
 
         try {
-            Statements statements = CCJSqlParserUtil.parseStatements(
-                    ddl.endsWith(";") ? ddl : ddl + ";");
+            String normalizedDdl = preprocessDdl(ddl.endsWith(";") ? ddl : ddl + ";");
+            Statements statements = CCJSqlParserUtil.parseStatements(normalizedDdl);
 
             for (Statement statement : statements.getStatements()) {
                 if (statement instanceof CreateTable ct) {
-                    Map<String, Object> table = parseCreateTable(ct, warnings);
+                    Map<String, Object> table = parseCreateTable(ct, warnings, deferredFks);
                     tables.add(table);
                     tablesByName.put(unquote(ct.getTable().getName()).toLowerCase(), table);
                 } else if (statement instanceof CreateIndex ci) {
@@ -45,6 +47,15 @@ public class DdlParser {
                     parseAlterTable(alter, tablesByName, relationships, warnings);
                 }
             }
+
+            // Resolve inline FK constraints after all tables are collected
+            for (Object[] entry : deferredFks) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> srcTable = (Map<String, Object>) entry[0];
+                ForeignKeyIndex fk = (ForeignKeyIndex) entry[1];
+                Map<String, Object> rel = parseForeignKey(fk, srcTable, tablesByName, warnings);
+                if (rel != null) relationships.add(rel);
+            }
         } catch (Exception e) {
             warnings.add("Parse error: " + e.getMessage());
         }
@@ -53,7 +64,7 @@ public class DdlParser {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> parseCreateTable(CreateTable ct, List<String> warnings) {
+    private Map<String, Object> parseCreateTable(CreateTable ct, List<String> warnings, List<Object[]> deferredFks) {
         String tableName = unquote(ct.getTable().getName());
 
         Map<String, Object> table = new LinkedHashMap<>();
@@ -81,6 +92,9 @@ public class DdlParser {
                 String type = idx.getType() != null ? idx.getType().toUpperCase() : "";
                 if (type.contains("PRIMARY KEY") && idx.getColumnsNames() != null) {
                     idx.getColumnsNames().stream().map(this::unquote).forEach(pkColumnNames::add);
+                } else if (idx instanceof ForeignKeyIndex fk) {
+                    // Defer FK resolution until all tables are parsed
+                    deferredFks.add(new Object[]{table, fk});
                 }
             }
         }
@@ -251,6 +265,11 @@ public class DdlParser {
             }
         } catch (Exception ignored) {}
         return "RESTRICT";
+    }
+
+    /** MSSQL [bracket] identifiers → "double-quoted" so JSqlParser can parse them uniformly */
+    private String preprocessDdl(String ddl) {
+        return ddl.replaceAll("\\[([^\\]]+)\\]", "\"$1\"");
     }
 
     private String unquote(String name) {

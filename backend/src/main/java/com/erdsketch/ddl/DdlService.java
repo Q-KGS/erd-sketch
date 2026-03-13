@@ -20,6 +20,8 @@ public class DdlService {
     private final ObjectMapper objectMapper;
     private final PostgreSqlDdlGenerator postgresGenerator;
     private final MySqlDdlGenerator mysqlGenerator;
+    private final OracleDdlGenerator oracleGenerator;
+    private final MssqlDdlGenerator mssqlGenerator;
     private final DdlParser ddlParser;
 
     public DdlGenerateResponse generate(UUID documentId, DdlGenerateRequest request, UUID userId) {
@@ -35,7 +37,8 @@ public class DdlService {
             String ddl = switch (request.dialect()) {
                 case POSTGRESQL -> postgresGenerator.generate(schema, request.tableIds(), request.includeDrops(), warnings);
                 case MYSQL -> mysqlGenerator.generate(schema, request.tableIds(), request.includeDrops(), warnings);
-                default -> "-- DDL generation for " + request.dialect() + " is not yet implemented";
+                case ORACLE -> oracleGenerator.generate(schema, request.tableIds(), request.includeDrops(), warnings);
+                case MSSQL -> mssqlGenerator.generate(schema, request.tableIds(), request.includeDrops(), warnings);
             };
             return new DdlGenerateResponse(ddl, warnings);
         } catch (Exception e) {

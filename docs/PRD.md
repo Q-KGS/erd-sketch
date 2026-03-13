@@ -535,6 +535,12 @@ erdsketch/
 
 ## 8. 검증 계획
 
+### CI/CD
+
+- **플랫폼**: GitHub Actions
+- **트리거**: `main` 브랜치 push 및 PR
+- **Job**: Backend (mvnw verify) / Frontend Lint+Typecheck / Frontend Test 병렬 실행
+
 ### 프론트엔드
 
 - **단위/컴포넌트**: Vitest + React Testing Library

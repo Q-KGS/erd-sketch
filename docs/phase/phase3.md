@@ -292,10 +292,16 @@ product_tag (product_id FK→product, tag_id FK→tag) -- M:N 조인 테이블
 
 ## 6. 완료 기준 (Definition of Done)
 
-- [ ] MySQL, Oracle, MSSQL DDL 생성기 단위 테스트 전체 통과
-- [ ] DDL 파서 단위 테스트 B-PARSE-01 ~ B-PARSE-12 통과
+- [x] MySQL DDL 생성기 단위 테스트 통과 (B-MYSQL-01~11, 총 11개)
+- [x] Oracle DDL 생성기 단위 테스트 통과 (B-ORA-01~08, 총 8개)
+- [x] MSSQL DDL 생성기 단위 테스트 통과 (B-MSSQL-01~07, 총 7개)
+- [x] DDL 파서 단위 테스트 B-PARSE-01 ~ B-PARSE-14 통과 (총 14개, 인라인 FK 지원 포함)
+- [x] DDL 프리뷰 패널 테스트 통과 (F-DDL-01~05, 총 5개)
+- [x] JSON 내보내기/가져오기 테스트 통과 (F-JSON-01~03, 총 3개)
+- [x] PNG 내보내기 테스트 통과 (F-PNG-01~03, 총 3개)
+- [x] 백엔드 전체 테스트 104개 통과 (`mvn test`)
+- [x] 프론트엔드 전체 테스트 50개 통과 (`npm test`)
 - [ ] 생성된 PostgreSQL/MySQL DDL을 실제 DB에서 에러 없이 실행 확인
 - [ ] E2E-DDL-02 (DDL 파싱 → ERD 자동 생성) 검증 완료
 - [ ] E2E-EXPORT-01 (JSON 라운드트립) 데이터 손실 없음
 - [ ] E2E-EXPORT-02 (PNG 내보내기) 유효한 이미지 파일 생성
-- [ ] DDL 프리뷰 패널에서 CodeMirror SQL 구문 강조 표시
