@@ -52,10 +52,8 @@ public class SecurityConfig {
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
-                .requestMatchers("/ws/**").permitAll()
-                .requestMatchers("/oauth/**", "/login/oauth2/**").permitAll()
-                .requestMatchers("/", "/index.html", "/assets/**", "/*.js", "/*.css", "/*.ico", "/*.png", "/*.svg").permitAll()
-                .anyRequest().authenticated()
+                .requestMatchers("/api/v1/**").authenticated()
+                .anyRequest().permitAll()   // SPA 라우팅 경로 및 정적 파일은 프론트엔드가 처리
             )
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((request, response, e) -> {
@@ -89,7 +87,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
+        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173", "https://erdsketch.fly.dev"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

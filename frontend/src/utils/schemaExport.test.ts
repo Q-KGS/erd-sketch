@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest'
-import { exportSchemaToJson, importSchemaFromJson, downloadSchemaJson } from './schemaExport'
+import { exportSchemaToJson, importSchemaFromJson } from './schemaExport'
 import type { ErdSchema } from '@/models'
 
 const mockSchema: ErdSchema = {

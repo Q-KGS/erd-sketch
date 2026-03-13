@@ -304,10 +304,10 @@ product_tag (product_id FK→product, tag_id FK→tag) -- M:N 조인 테이블
 - [x] PNG 내보내기 테스트 통과 (F-PNG-01~03, 총 3개)
 - [x] 백엔드 전체 테스트 104개 통과 (`mvn test`) — Phase 3 완료 시점 기준
 - [x] 프론트엔드 전체 테스트 50개 통과 (`npm test`) — Phase 3 완료 시점 기준
-- [ ] 생성된 PostgreSQL/MySQL DDL을 실제 DB에서 에러 없이 실행 확인
-- [ ] E2E-DDL-02 (DDL 파싱 → ERD 자동 생성) 검증 완료
-- [ ] E2E-EXPORT-01 (JSON 라운드트립) 데이터 손실 없음
-- [ ] E2E-EXPORT-02 (PNG 내보내기) 유효한 이미지 파일 생성
+- [x] 생성된 PostgreSQL/MySQL DDL을 실제 DB에서 에러 없이 실행 확인 (2026-03-14 수동검증 완료, questiongs)
+- [x] E2E-DDL-02 (DDL 파싱 → ERD 자동 생성) 검증 완료 (2026-03-14 수동검증 완료, questiongs)
+- [x] E2E-EXPORT-01 (JSON 라운드트립) 데이터 손실 없음 (2026-03-14 수동검증 완료, questiongs)
+- [x] E2E-EXPORT-02 (PNG 내보내기) 유효한 이미지 파일 생성 (2026-03-14 수동검증 완료, questiongs)
 
 ---
 

@@ -9,7 +9,7 @@ interface RelationshipEdgeData extends RelationshipDef {
 const RelationshipEdge = memo(function RelationshipEdge({
   id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data, selected,
 }: EdgeProps) {
-  const edgeData = data as RelationshipEdgeData
+  const edgeData = data as unknown as RelationshipEdgeData
   const [edgePath, labelX, labelY] = getBezierPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition })
 
   return (

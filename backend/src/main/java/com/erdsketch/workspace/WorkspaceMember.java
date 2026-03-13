@@ -3,11 +3,13 @@ package com.erdsketch.workspace;
 import com.erdsketch.user.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.Instant;
 
 @Entity
 @Table(name = "workspace_members")
+@DynamicUpdate
 @Getter
 @Setter
 @NoArgsConstructor

@@ -25,6 +25,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
+        String path = request.getRequestURI();
+        if (path.startsWith("/api/v1/auth/")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         String token = extractToken(request);
         if (token != null && jwtService.isTokenValid(token)) {
             String userId = jwtService.extractUserId(token);

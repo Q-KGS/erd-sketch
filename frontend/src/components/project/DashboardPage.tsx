@@ -6,7 +6,7 @@ import { workspaceApi } from '@/api/workspace'
 import { projectApi } from '@/api/project'
 import { documentApi } from '@/api/document'
 import { useAuthStore } from '@/store/authStore'
-import type { Workspace, Project, DbType } from '@/models'
+import type { Workspace, Project, DbType, WorkspaceRole } from '@/models'
 
 export default function DashboardPage() {
   const navigate = useNavigate()
@@ -15,6 +15,7 @@ export default function DashboardPage() {
   const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null)
   const [showCreateWorkspace, setShowCreateWorkspace] = useState(false)
   const [showCreateProject, setShowCreateProject] = useState(false)
+  const [showInviteMember, setShowInviteMember] = useState(false)
 
   const { data: workspaces = [] } = useQuery({
     queryKey: ['workspaces'],
@@ -26,6 +27,15 @@ export default function DashboardPage() {
     queryFn: () => projectApi.list(selectedWorkspace!.id),
     enabled: !!selectedWorkspace,
   })
+
+  const { data: members = [] } = useQuery({
+    queryKey: ['workspace-members', selectedWorkspace?.id],
+    queryFn: () => workspaceApi.getMembers(selectedWorkspace!.id),
+    enabled: !!selectedWorkspace,
+  })
+
+  const myRole = members.find((m) => m.userId === user?.id)?.role
+  const canInvite = myRole === 'OWNER' || myRole === 'ADMIN'
 
   const createWorkspaceMutation = useMutation({
     mutationFn: workspaceApi.create,
@@ -47,6 +57,16 @@ export default function DashboardPage() {
     },
   })
 
+  const inviteMemberMutation = useMutation({
+    mutationFn: ({ email, role }: { email: string; role: WorkspaceRole }) =>
+      workspaceApi.inviteMember(selectedWorkspace!.id, { email, role }),
+    onSuccess: () => {
+      setShowInviteMember(false)
+      toast.success('멤버를 초대했습니다.')
+    },
+    onError: () => toast.error('초대에 실패했습니다. 이메일을 확인해주세요.'),
+  })
+
   const openDocument = async (project: Project) => {
     const docs = await documentApi.list(project.id)
     if (docs.length > 0) {
@@ -55,6 +75,11 @@ export default function DashboardPage() {
       const doc = await documentApi.create(project.id, { name: 'Main ERD' })
       navigate(`/workspaces/${selectedWorkspace?.id}/projects/${project.id}/documents/${doc.id}`)
     }
+  }
+
+  const handleLogout = () => {
+    logout()
+    qc.clear()
   }
 
   return (
@@ -70,6 +95,7 @@ export default function DashboardPage() {
             <button
               onClick={() => setShowCreateWorkspace(true)}
               className="text-gray-400 hover:text-primary-600 text-lg leading-none"
+              title="새 워크스페이스"
             >+</button>
           </div>
           <ul className="space-y-1">
@@ -95,7 +121,7 @@ export default function DashboardPage() {
               {user?.displayName?.[0]?.toUpperCase()}
             </div>
             <span className="text-sm text-gray-700 flex-1 truncate">{user?.displayName}</span>
-            <button onClick={logout} className="text-gray-400 hover:text-red-500 text-sm">
+            <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 text-sm">
               로그아웃
             </button>
           </div>
@@ -108,12 +134,25 @@ export default function DashboardPage() {
           <>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">{selectedWorkspace.name}</h2>
-              <button
-                onClick={() => setShowCreateProject(true)}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium text-sm"
-              >
-                + 새 프로젝트
-              </button>
+              <div className="flex items-center gap-2">
+                {canInvite && (
+                  <button
+                    onClick={() => setShowInviteMember(true)}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm flex items-center gap-1.5"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
+                    멤버 초대
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowCreateProject(true)}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium text-sm"
+                >
+                  + 새 프로젝트
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {projects.map((project) => (
@@ -146,7 +185,6 @@ export default function DashboardPage() {
         )}
       </main>
 
-      {/* Create Workspace Modal */}
       {showCreateWorkspace && (
         <CreateWorkspaceModal
           onClose={() => setShowCreateWorkspace(false)}
@@ -155,12 +193,20 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* Create Project Modal */}
       {showCreateProject && selectedWorkspace && (
         <CreateProjectModal
           onClose={() => setShowCreateProject(false)}
           onSubmit={(data) => createProjectMutation.mutate(data)}
           isPending={createProjectMutation.isPending}
+        />
+      )}
+
+      {showInviteMember && selectedWorkspace && (
+        <InviteMemberModal
+          workspaceName={selectedWorkspace.name}
+          onClose={() => setShowInviteMember(false)}
+          onSubmit={(data) => inviteMemberMutation.mutate(data)}
+          isPending={inviteMemberMutation.isPending}
         />
       )}
     </div>
@@ -176,7 +222,6 @@ function CreateWorkspaceModal({
 
   const derivedSlug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
   const displaySlug = slugEdited ? slug : derivedSlug
-
   const slugError = displaySlug.length > 0 && !/^[a-z0-9][a-z0-9-]*$/.test(displaySlug)
 
   return (
@@ -257,6 +302,59 @@ function CreateProjectModal({
             <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">취소</button>
             <button type="submit" disabled={isPending} className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50">
               {isPending ? '생성 중...' : '생성'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function InviteMemberModal({
+  workspaceName, onClose, onSubmit, isPending,
+}: {
+  workspaceName: string
+  onClose: () => void
+  onSubmit: (data: { email: string; role: WorkspaceRole }) => void
+  isPending: boolean
+}) {
+  const [email, setEmail] = useState('')
+  const [role, setRole] = useState<WorkspaceRole>('MEMBER')
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
+        <h3 className="text-lg font-bold mb-1">멤버 초대</h3>
+        <p className="text-sm text-gray-500 mb-3">{workspaceName} 워크스페이스에 초대합니다.</p>
+        <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
+          <p className="text-xs text-amber-700">ErdSketch에 이미 가입된 계정의 이메일만 추가할 수 있습니다.</p>
+        </div>
+        <form onSubmit={(e) => { e.preventDefault(); onSubmit({ email, role }) }} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+            <input
+              type="email" required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              value={email} onChange={(e) => setEmail(e.target.value)}
+              placeholder="colleague@example.com"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">권한</label>
+            <select
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              value={role}
+              onChange={(e) => setRole(e.target.value as WorkspaceRole)}
+            >
+              <option value="MEMBER">멤버 — 편집 가능</option>
+              <option value="VIEWER">뷰어 — 읽기 전용</option>
+              <option value="ADMIN">관리자 — 멤버 관리 가능</option>
+            </select>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">취소</button>
+            <button type="submit" disabled={isPending} className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50">
+              {isPending ? '초대 중...' : '초대 보내기'}
             </button>
           </div>
         </form>

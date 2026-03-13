@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   ReactFlow, ReactFlowProvider, Background, Controls, MiniMap,
@@ -7,9 +7,13 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useQuery } from '@tanstack/react-query'
-import { documentApi } from '@/api/document'
 import { projectApi } from '@/api/project'
+import { workspaceApi } from '@/api/workspace'
 import { useEditorStore } from '@/store/editorStore'
+import { useAuthStore } from '@/store/authStore'
+import { downloadSchemaJson } from '@/utils/schemaExport'
+import toast from 'react-hot-toast'
+import { toPng } from 'html-to-image'
 import { useYjs } from '@/hooks/useYjs'
 import { useSchema } from '@/hooks/useSchema'
 import TableNode from './TableNode'
@@ -34,10 +38,12 @@ export default function EditorPage() {
 }
 
 function EditorCanvas() {
-  const { documentId, projectId } = useParams<{ documentId: string; projectId: string; workspaceId: string }>()
+  const { documentId, projectId, workspaceId } = useParams<{ documentId: string; projectId: string; workspaceId: string }>()
   const { setDocument, setSelection, selectedId, selectionType, isDdlPanelOpen } = useEditorStore()
-  const [nodes, setNodes, onNodesChange] = useNodesState([])
-  const [edges, setEdges, onEdgesChange] = useEdgesState([])
+  const { user } = useAuthStore()
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
+  const canvasRef = useRef<HTMLDivElement>(null)
   const { screenToFlowPosition } = useReactFlow()
 
   const { ydoc, awareness, isConnected } = useYjs(documentId ?? null)
@@ -48,6 +54,15 @@ function EditorCanvas() {
     queryFn: () => projectApi.get(projectId!),
     enabled: !!projectId,
   })
+
+  const { data: members = [] } = useQuery({
+    queryKey: ['workspace-members', workspaceId],
+    queryFn: () => workspaceApi.getMembers(workspaceId!),
+    enabled: !!workspaceId,
+  })
+
+  const myRole = members.find((m) => m.userId === user?.id)?.role
+  const isReadOnly = myRole === 'VIEWER'
 
   useEffect(() => {
     if (documentId && projectId) {
@@ -61,7 +76,7 @@ function EditorCanvas() {
       id: table.id,
       type: 'table',
       position: table.position,
-      data: table,
+      data: table as unknown as Record<string, unknown>,
     }))
 
     const newEdges: Edge[] = Object.values(schema.relationships).map((rel: RelationshipDef) => ({
@@ -71,7 +86,7 @@ function EditorCanvas() {
       target: rel.targetTableId,
       sourceHandle: 'table-source',
       targetHandle: 'table-target',
-      data: rel,
+      data: rel as unknown as Record<string, unknown>,
     }))
 
     setNodes(newNodes)
@@ -80,7 +95,7 @@ function EditorCanvas() {
 
   const onConnect: OnConnect = useCallback(
     (connection: Connection) => {
-      if (!connection.source || !connection.target) return
+      if (isReadOnly || !connection.source || !connection.target) return
       addRelationship({
         sourceTableId: connection.source,
         sourceColumnIds: [],
@@ -91,7 +106,7 @@ function EditorCanvas() {
         onUpdate: 'RESTRICT',
       })
     },
-    [addRelationship]
+    [addRelationship, isReadOnly]
   )
 
   const handleAddTable = useCallback(() => {
@@ -103,27 +118,71 @@ function EditorCanvas() {
 
   const onNodesDelete = useCallback(
     (deletedNodes: Node[]) => {
+      if (isReadOnly) return
       deletedNodes.forEach((n) => deleteTable(n.id))
     },
-    [deleteTable]
+    [deleteTable, isReadOnly]
   )
 
   const onEdgesDelete = useCallback(
     (deletedEdges: Edge[]) => {
+      if (isReadOnly) return
       deletedEdges.forEach((e) => deleteRelationship(e.id))
     },
-    [deleteRelationship]
+    [deleteRelationship, isReadOnly]
   )
 
   const handleAutoLayout = useCallback(() => {
-    setNodes((nds) => applyAutoLayout(nds, edges))
-  }, [edges, setNodes])
+    const laid = applyAutoLayout(nodes, edges)
+    setNodes(laid)
+    // Yjs에 새 position 동기화
+    laid.forEach((node) => {
+      updateTable(node.id, { position: node.position })
+    })
+  }, [nodes, edges, setNodes, updateTable])
+
+  const handleExportJson = useCallback(() => {
+    const filename = `${project?.name ?? 'erdsketch'}_${new Date().toISOString().slice(0, 10)}.json`
+    downloadSchemaJson(schema, filename)
+    toast.success('JSON으로 내보냈습니다.')
+  }, [schema, project?.name])
+
+  const handleExportPng = useCallback(async () => {
+    const element = canvasRef.current?.querySelector('.react-flow') as HTMLElement | null
+    if (!element) return
+    try {
+      const dataUrl = await toPng(element, {
+        pixelRatio: 2,
+        cacheBust: true,
+        filter: (node) => {
+          if (node instanceof Element) {
+            const cls = node.className
+            if (typeof cls === 'string') {
+              return !cls.includes('react-flow__controls') &&
+                     !cls.includes('react-flow__minimap') &&
+                     !cls.includes('react-flow__panel') &&
+                     !cls.includes('export-ignore')
+            }
+          }
+          return true
+        },
+      })
+      const a = document.createElement('a')
+      a.href = dataUrl
+      a.download = `${project?.name ?? 'erdsketch'}_${new Date().toISOString().slice(0, 10)}.png`
+      a.click()
+      toast.success('PNG로 내보냈습니다.')
+    } catch {
+      toast.error('PNG 내보내기에 실패했습니다.')
+    }
+  }, [project?.name])
 
   const handleNodeDragStop = useCallback(
     (_: React.MouseEvent, node: Node) => {
+      if (isReadOnly) return
       updateTable(node.id, { position: node.position })
     },
-    [updateTable]
+    [updateTable, isReadOnly]
   )
 
   const onEdgeClick: EdgeMouseHandler = useCallback(
@@ -140,26 +199,30 @@ function EditorCanvas() {
         projectName={project?.name ?? ''}
         targetDbType={project?.targetDbType ?? 'POSTGRESQL'}
         isConnected={isConnected}
+        isReadOnly={isReadOnly}
         onAutoLayout={handleAutoLayout}
         onAddTable={handleAddTable}
+        onExportJson={handleExportJson}
+        onExportPng={handleExportPng}
         awareness={awareness}
       />
       <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 relative">
+        <div className="flex-1 relative" ref={canvasRef}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
+            onConnect={isReadOnly ? undefined : onConnect}
             onEdgeClick={onEdgeClick}
-            onNodesDelete={onNodesDelete}
-            onEdgesDelete={onEdgesDelete}
-            onNodeDragStop={handleNodeDragStop}
+            onNodesDelete={isReadOnly ? undefined : onNodesDelete}
+            onEdgesDelete={isReadOnly ? undefined : onEdgesDelete}
+            onNodeDragStop={isReadOnly ? undefined : handleNodeDragStop}
+            nodesDraggable={!isReadOnly}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             fitView
-            deleteKeyCode="Delete"
+            deleteKeyCode={isReadOnly ? null : 'Delete'}
             multiSelectionKeyCode="Shift"
           >
             <Background />
@@ -169,11 +232,11 @@ function EditorCanvas() {
           </ReactFlow>
         </div>
 
-        {selectedTable && (
+        {selectedTable && !isReadOnly && (
           <TableEditorPanel key={selectedTable.id} table={selectedTable} ydoc={ydoc} />
         )}
 
-        {selectedRelationship && (
+        {selectedRelationship && !isReadOnly && (
           <RelationshipEditorPanel relationship={selectedRelationship} onUpdate={updateRelationship} />
         )}
 

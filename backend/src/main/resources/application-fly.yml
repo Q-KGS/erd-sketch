@@ -18,9 +18,23 @@ spring:
   flyway:
     enabled: false
 
+  mail:
+    host: smtp.sendgrid.net
+    port: 587
+    username: apikey
+    password: ${SENDGRID_API_KEY:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 app:
   jwt:
     secret: ${JWT_SECRET}
+  mail:
+    from: noreply@erdsketch.fly.dev
 
 logging:
   level:

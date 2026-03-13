@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach } from 'vitest'
+import { describe, test, expect, vi } from 'vitest'
 import { render, screen, act } from '@testing-library/react'
 import CollaborationPresence from './CollaborationPresence'
 

@@ -8,7 +8,7 @@ interface TableNodeData extends TableDef {
 }
 
 const TableNode = memo(function TableNode({ data, selected }: NodeProps) {
-  const tableData = data as TableNodeData
+  const tableData = data as unknown as TableNodeData
   const { setSelection } = useEditorStore()
 
   const handleClick = () => {

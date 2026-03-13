@@ -1,14 +1,18 @@
 package com.erdsketch.workspace;
 
+import com.erdsketch.config.EmailService;
 import com.erdsketch.user.User;
 import com.erdsketch.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WorkspaceService {
@@ -16,6 +20,9 @@ public class WorkspaceService {
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository memberRepository;
     private final UserRepository userRepository;
+
+    @Autowired(required = false)
+    private EmailService emailService;
 
     @Transactional
     public WorkspaceResponse create(CreateWorkspaceRequest request, UUID ownerId) {
@@ -79,13 +86,29 @@ public class WorkspaceService {
         checkAdminAccess(workspaceId, inviterId);
         User invitee = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + request.email()));
-        Workspace workspace = workspaceRepository.getReferenceById(workspaceId);
+        User inviter = userRepository.getReferenceById(inviterId);
+        Workspace workspace = workspaceRepository.findById(workspaceId)
+                .orElseThrow(() -> new IllegalArgumentException("Workspace not found"));
         WorkspaceMember member = WorkspaceMember.builder()
                 .workspace(workspace)
                 .user(invitee)
                 .role(request.role())
                 .build();
         memberRepository.save(member);
+
+        if (emailService != null) {
+            try {
+                emailService.sendWorkspaceInvite(
+                    invitee.getEmail(),
+                    invitee.getDisplayName(),
+                    workspace.getName(),
+                    inviter.getDisplayName()
+                );
+            } catch (Exception e) {
+                log.warn("Failed to send invite email to {}: {}", invitee.getEmail(), e.getMessage());
+            }
+        }
+
         return WorkspaceMemberResponse.from(member);
     }
 

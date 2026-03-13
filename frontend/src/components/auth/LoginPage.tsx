@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { authApi } from '@/api/auth'
 import { useAuthStore } from '@/store/authStore'
@@ -8,11 +8,13 @@ import { useAuthStore } from '@/store/authStore'
 export default function LoginPage() {
   const navigate = useNavigate()
   const { setAuth } = useAuthStore()
+  const queryClient = useQueryClient()
   const [form, setForm] = useState({ email: '', password: '' })
 
   const { mutate, isPending } = useMutation({
     mutationFn: authApi.login,
     onSuccess: (data) => {
+      queryClient.clear()
       setAuth(data.user, data.tokens)
       navigate('/')
     },

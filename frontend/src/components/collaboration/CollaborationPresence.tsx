@@ -29,7 +29,7 @@ export default function CollaborationPresence({ awareness }: Props) {
   if (presences.length === 0) return null
 
   return (
-    <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+    <div className="absolute top-2 right-2 z-10 flex items-center gap-1 export-ignore">
       {presences.slice(0, 5).map((presence) => (
         <div
           key={presence.clientId}

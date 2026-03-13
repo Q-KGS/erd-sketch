@@ -11,7 +11,7 @@ FROM eclipse-temurin:21-jdk-alpine AS backend-build
 WORKDIR /app
 COPY backend/ ./
 COPY --from=frontend-build /app/dist src/main/resources/static/
-RUN chmod +x mvnw && ./mvnw package -DskipTests -q
+RUN sed -i 's/\r$//' mvnw && chmod +x mvnw && ./mvnw package -DskipTests -q
 
 # Stage 3: Runtime
 FROM eclipse-temurin:21-jre-alpine AS runtime

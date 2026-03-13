@@ -35,7 +35,7 @@ const schemaWithTable: ErdSchema = {
 describe('DdlPreviewPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    global.navigator.clipboard = { writeText: vi.fn() } as unknown as Clipboard
+    Object.defineProperty(global.navigator, 'clipboard', { value: { writeText: vi.fn() }, configurable: true, writable: true })
     global.URL.createObjectURL = vi.fn(() => 'blob:mock')
     global.URL.revokeObjectURL = vi.fn()
   })

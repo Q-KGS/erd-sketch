@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import LoginPage from '@/components/auth/LoginPage'
@@ -7,6 +8,16 @@ import EditorPage from '@/components/canvas/EditorPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
+  const [hydrated, setHydrated] = useState(useAuthStore.persist.hasHydrated)
+
+  useEffect(() => {
+    if (!hydrated) {
+      const unsubscribe = useAuthStore.persist.onFinishHydration(() => setHydrated(true))
+      return unsubscribe
+    }
+  }, [hydrated])
+
+  if (!hydrated) return null
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />
 }
 

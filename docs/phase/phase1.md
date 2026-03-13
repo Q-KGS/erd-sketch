@@ -308,10 +308,10 @@ test('addTableToYdoc creates table with default column', () => {
 
 - [x] 모든 백엔드 통합 테스트 통과 (H2 인메모리 DB) — 48개 통과 (2026-03-13)
 - [x] 프론트엔드 단위 테스트 통과 (Vitest) — 20개 통과 (2026-03-13)
-- [ ] E2E 시나리오 E2E-01 ~ E2E-07 수동 검증 완료
+- [x] E2E 시나리오 E2E-01 ~ E2E-07 수동 검증 완료 (2026-03-14 수동검증 완료, questiongs)
 - [x] `POST /api/v1/auth/register` → `POST /api/v1/auth/login` → CRUD 플로우 전체 동작
-- [ ] 생성된 PostgreSQL DDL을 실제 DB에서 `psql`로 실행하여 에러 없음 확인
-- [ ] 코드 리뷰 완료
+- [x] 생성된 PostgreSQL DDL을 실제 DB에서 `psql`로 실행하여 에러 없음 확인 (2026-03-14 수동검증 완료, questiongs)
+- [x] 코드 리뷰 완료 (2026-03-14 완료)
 
 ## 7. 구현 완료 내역 (2026-03-13)
 

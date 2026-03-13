@@ -344,6 +344,45 @@ void parseDbml_withReference_createsRelationship() {
 
 ---
 
+## 8-1. Fly.io 배포 설정 기준 추가 구현 내역 (2026-03-14)
+
+### 배포 환경
+| 항목 | 내용 |
+|------|------|
+| 플랫폼 | Fly.io 단일 컨테이너 (region: nrt, shared-cpu-1x 512MB) |
+| DB | H2 파일 DB (`/data/erdsketch`) — Flyway 비활성화, `ddl-auto: update` |
+| 이메일 | SendGrid SMTP (`smtp.sendgrid.net:587`) — Fly secret `SENDGRID_API_KEY` |
+| OAuth | 코드 구현 완료, **현재 비활성화** (`app.oauth.enabled=false` in application-fly.yml) |
+
+### OAuth 프로덕션 활성화 방법 (미완료)
+OAuth를 Fly.io에서 활성화하려면 다음이 필요하다:
+```bash
+# 1. application-fly.yml에 추가
+app:
+  oauth:
+    enabled: true
+
+# 2. OAuth 앱 등록 후 시크릿 설정
+fly secrets set GOOGLE_CLIENT_ID=xxx GOOGLE_CLIENT_SECRET=xxx
+fly secrets set GITHUB_CLIENT_ID=xxx GITHUB_CLIENT_SECRET=xxx
+
+# 3. OAuth 앱의 콜백 URL 등록
+# Google: https://erdsketch.fly.dev/login/oauth2/code/google
+# GitHub: https://erdsketch.fly.dev/login/oauth2/code/github
+```
+> ⚠️ Flyway가 비활성화되어 있으므로 `V2__oauth.sql` 마이그레이션은 실행되지 않음. `ddl-auto: update`로 컬럼이 자동 추가됨.
+
+### 백엔드 버그픽스 및 배포 대응
+| 파일 | 변경 내용 |
+|------|----------|
+| `JwtAuthFilter.java` | `/api/v1/auth/**` 경로는 토큰 검사 없이 즉시 통과 (기존 토큰으로 인한 회원가입 오류 방지) |
+| `WorkspaceMember.java` | `@DynamicUpdate` 추가 — H2 파일 DB에서 `joined_at=NULL` 기존 행 UPDATE 시 NOT NULL 위반 방지 |
+| `config/EmailService.java` | `@ConditionalOnProperty(name="spring.mail.host")` — 로컬 환경에서 메일 설정 없을 시 빈 미생성 |
+| `WorkspaceService.java` | `inviteMember` 시 SendGrid로 초대 이메일 발송, 발송 실패해도 초대는 성공 처리 |
+| `application-fly.yml` | `spring.mail` SendGrid SMTP 설정, `app.mail.from` 추가 |
+
+---
+
 ## 9. 전체 누적 테스트 현황 (2026-03-13 최종)
 
 | Phase | 백엔드 신규 | 프론트엔드 신규 |
