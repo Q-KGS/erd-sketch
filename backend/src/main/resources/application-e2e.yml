@@ -1,0 +1,35 @@
+# E2E 통합 테스트 프로파일
+# CI에서 PostgreSQL 서비스 컨테이너와 함께 사용
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/erdsketch_e2e}
+    username: ${DATABASE_USERNAME:erdsketch}
+    password: ${DATABASE_PASSWORD:erdsketch}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+    show-sql: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:e2e-test-secret-key-for-playwright-testing-256bits-padding-here-aaa}
+    access-token-expiry: 3600000
+    refresh-token-expiry: 2592000000
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.erdsketch: WARN
+    org.springframework.security: WARN
+    org.flywaydb: INFO
