@@ -35,8 +35,9 @@ export default function LoginPage() {
         <p className="text-center text-gray-500 mb-8">팀 ERD 설계 도구</p>
         <form onSubmit={(e) => { e.preventDefault(); mutate(form) }} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+            <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
             <input
+              id="login-email"
               type="email"
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -45,8 +46,9 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
+            <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
             <input
+              id="login-password"
               type="password"
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"

@@ -33,8 +33,9 @@ export default function RegisterPage() {
         <p className="text-center text-gray-500 mb-8">계정 만들기</p>
         <form onSubmit={(e) => { e.preventDefault(); mutate(form) }} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">이름</label>
+            <label htmlFor="reg-name" className="block text-sm font-medium text-gray-700 mb-1">이름</label>
             <input
+              id="reg-name"
               type="text"
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -43,8 +44,9 @@ export default function RegisterPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+            <label htmlFor="reg-email" className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
             <input
+              id="reg-email"
               type="email"
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -53,8 +55,9 @@ export default function RegisterPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
+            <label htmlFor="reg-password" className="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
             <input
+              id="reg-password"
               type="password"
               required
               minLength={8}
