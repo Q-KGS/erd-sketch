@@ -327,7 +327,34 @@ test('addTableToYdoc creates table with default column', () => {
 - `WorkspaceServiceTest.java` — B-WS-01~10 (11개 테스트)
 - `ProjectServiceTest.java` — B-PRJ-01~06 (7개 테스트)
 - `DocumentServiceTest.java` — B-DOC-01~04 (5개 테스트)
-- `PostgreSqlDdlGeneratorTest.java` — B-DDL-01~12 (13개 테스트)
+- `PostgreSqlDdlGeneratorTest.java` — B-DDL-01~13 (14개 테스트)
 - `schemaConverter.test.ts` — F-CONV-01~05 (5개 테스트)
 - `autoLayout.test.ts` — F-LAYOUT-01~04 (6개 테스트)
 - `typeMapping.test.ts` — F-TYPE-01~04 (9개 테스트)
+
+---
+
+## 8. 추가 개선 사항 (후속 커밋)
+
+### 버그 수정
+
+| 커밋 | 내용 |
+|------|------|
+| `b92aa8f` | DDL 생성 시 `schema null` NPE 수정 — `DdlGenerateRequest`에 `schema` 필드 추가, 프론트엔드가 현재 스키마를 요청에 포함, 백엔드에서 요청 스키마 우선 사용 |
+| `a026d1f` | H2 테스트 환경 BYTEA 호환성 수정 — `ErdDocument.yjsState`, `DocumentVersion.yjsState`에 `@Column(columnDefinition = "BYTEA")` 추가 |
+| `7ce0e1f` | H2 JDBC URL에 `CREATE DOMAIN IF NOT EXISTS BYTEA AS VARBINARY` 추가 |
+| `e7c7df5` | 테이블 전환 시 논리명/주석 입력 필드가 초기화되지 않는 버그 수정 — `<TableEditorPanel key={selectedTable.id} ...>` `key` prop 추가로 테이블 변경 시 컴포넌트 재마운트 |
+
+### 기능 개선
+
+| 커밋 | 내용 |
+|------|------|
+| `e7c7df5` | PostgreSQL DDL 컬럼 주석 개선 — 인라인 `-- comment` 대신 `COMMENT ON COLUMN "t"."c" IS '...'` 별도 구문으로 변경 (B-DDL-13 추가) |
+| `d5ab48d` | ERD 테이블 노드 컬럼 표시 형식 개선 — 논리명 / 물리명 / 유형 / NULL여부 / 코멘트 순서의 5컬럼 그리드 레이아웃 |
+| `d5ab48d` | DDL 미리보기 패널 — 선택된 테이블만 DDL 표시 (tableIds 필터링), 미선택 시 전체 표시 |
+
+### 환경 설정 수정
+
+| 커밋 | 내용 |
+|------|------|
+| `e7c7df5` | `pom.xml` — Lombok 1.18.36으로 업그레이드, `annotationProcessorPaths` 명시 추가 (JDK 25 환경에서 컴파일 오류 해결) |

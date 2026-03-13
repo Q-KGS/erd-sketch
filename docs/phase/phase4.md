@@ -301,3 +301,34 @@ psql -U erdsketch -d test_migration -c "\d+ users"
 - [ ] E2E-DIFF-02 마이그레이션 DDL 실제 DB 실행 성공
 - [ ] E2E-OFFLINE-01 (오프라인 편집 → 재연결) 수동 검증 완료
 - [ ] PDF 내보내기 한글 포함 정상 렌더링 확인
+
+---
+
+## 7. 구현 완료 내역 (2026-03-13, 커밋 `dc2bdbf`)
+
+### 백엔드 신규 파일
+| 파일 | 설명 |
+|------|------|
+| `DocumentVersion.java` | JPA 엔티티 — `document_versions` 테이블, `yjs_state BYTEA`, `schema_snapshot JSONB` |
+| `DocumentVersionRepository.java` | `findByDocumentIdOrderByVersionNumberDesc`, `findTopByDocumentIdOrderByVersionNumberDesc` |
+| `DocumentVersionService.java` | 버전 생성/목록/상세/복원 |
+| `DocumentVersionController.java` | `POST/GET /api/v1/documents/{id}/versions`, `POST /{vId}/restore` |
+| `Comment.java` | JPA 엔티티 — `comments` 테이블, self-join replies |
+| `CommentService.java` | CRUD + 해결/재오픈, 작성자 권한 검사 |
+| `CommentController.java` | `POST /api/v1/documents/{id}/comments`, `PATCH/DELETE /api/v1/comments/{id}` |
+| `SchemaDiffService.java` | Jackson 기반 JSON 스키마 비교, `DiffResult` 반환 |
+| `MigrationDdlGenerator.java` | `DiffResult` → `ALTER TABLE` 스크립트 생성 |
+| `PdfExportService.java` | Apache PDFBox 3.0.3 서버사이드 PDF 생성 |
+
+### 프론트엔드 신규 파일
+| 파일 | 설명 |
+|------|------|
+| `api/comment.ts` | list/create/update/delete/resolve/reopen API 함수 |
+| `VersionHistoryPanel.tsx` | 버전 목록 / 저장 / 복원 UI |
+| `VersionHistoryPanel.test.tsx` | F-VER-01~05 (5개 테스트) |
+| `CommentPanel.tsx` | 스레드형 댓글, 해결 처리, 미해결 필터 |
+| `CommentPanel.test.tsx` | F-CMT-01~05 (5개 테스트) |
+
+### 테스트 결과 (Phase 4 완료 시점)
+- 백엔드: 38개 신규 (B-VER×8, B-CMT×11, B-DIFF×8, B-MIG×7, B-PDF×4)
+- 프론트엔드: 10개 신규 (F-VER×5, F-CMT×5)

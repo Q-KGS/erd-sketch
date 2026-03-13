@@ -259,10 +259,22 @@ console.log(`동기화 지연: ${t1 - t0}ms`)
 - [x] `useYjs` 훅 테스트 통과 (F-HOOK-01~03, 총 3개)
 - [x] `useSchema` 훅 테스트 통과 (F-SCHEMA-01~06 + 2 추가, 총 8개)
 - [x] `CollaborationPresence` 컴포넌트 테스트 통과 (F-PRES-01~04, 총 4개)
-- [x] 백엔드 전체 테스트 64개 통과 (`mvn test`)
-- [x] 프론트엔드 전체 테스트 39개 통과 (`npm test`)
+- [x] 백엔드 전체 테스트 64개 통과 (`mvn test`) — Phase 2 완료 시점 기준
+- [x] 프론트엔드 전체 테스트 39개 통과 (`npm test`) — Phase 2 완료 시점 기준
 - [ ] E2E-COLLAB-01, 02 (기본 동기화, 충돌 없음) 검증 완료
 - [ ] E2E-COLLAB-03 (프레즌스 아바타) 수동 검증 완료
 - [ ] 30초 자동 저장 후 DB에 `schema_snapshot` 존재 확인
 - [ ] 동기화 지연 < 200ms (로컬 네트워크 기준)
 - [ ] 20명 동시 접속 부하 테스트 통과 (모든 세션 메시지 수신)
+
+---
+
+## 8. 구현 완료 내역 (2026-03-13)
+
+### 테스트 파일
+- `YjsWebSocketHandlerTest.java` — B-WS-01~08 + 3 추가 (11개 테스트)
+- `SnapshotSchedulerTest.java` (DocumentServiceTest 내) — B-SNAP-01~03 + 2 추가 (5개 테스트)
+- `yjsProvider.test.ts` — F-YJS-01~03 + 1 추가 (4개 테스트)
+- `useYjs.test.tsx` — F-HOOK-01~03 (3개 테스트)
+- `useSchema.test.ts` — F-SCHEMA-01~06 + 2 추가 (8개 테스트)
+- `CollaborationPresence.test.tsx` — F-PRES-01~04 (4개 테스트)

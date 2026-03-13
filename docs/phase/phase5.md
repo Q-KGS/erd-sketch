@@ -300,10 +300,10 @@ void parseDbml_withReference_createsRelationship() {
 ## 7. 완료 기준 (Definition of Done)
 
 - [ ] OAuth Google/GitHub E2E 플로우 수동 검증 완료
-- [x] DBML 가져오기/내보내기 단위 테스트 (B-DBML-01 ~ B-DBML-08) 통과
-- [x] OAuth 단위 테스트 (B-OAUTH-01 ~ B-OAUTH-06) 통과
-- [x] JDBC 스키마 추출 단위 테스트 (B-JDBC-01 ~ B-JDBC-09) 통과 (H2 기반)
-- [x] 프로젝트 템플릿 단위 테스트 (B-TPL-01 ~ B-TPL-05) 통과
+- [x] DBML 가져오기/내보내기 단위 테스트 (B-DBML-01 ~ B-DBML-08, 총 10개) 통과
+- [x] OAuth 단위 테스트 (B-OAUTH-01 ~ B-OAUTH-06, 총 7개) 통과
+- [x] JDBC 스키마 추출 단위 테스트 (B-JDBC-01 ~ B-JDBC-09, 총 11개) 통과 (H2 기반)
+- [x] 프로젝트 템플릿 단위 테스트 (B-TPL-01 ~ B-TPL-05, 총 7개) 통과
 - [x] 다크 모드 단위 테스트 (F-DARK-01 ~ F-DARK-05) 통과
 - [x] 팔로우 모드 단위 테스트 (F-FOLLOW-01 ~ F-FOLLOW-04) 통과
 - [ ] DBML 내보내기 파일을 dbdiagram.io에서 에러 없이 로드 확인
@@ -312,3 +312,49 @@ void parseDbml_withReference_createsRelationship() {
 - [ ] JDBC 역공학 로컬 DB 검증 완료 (보안 정책 포함)
 - [ ] 팔로우 모드 < 100ms 동기화 확인
 - [ ] Chrome/Edge/Firefox 호환성 체크리스트 완료
+
+---
+
+## 8. 구현 완료 내역 (2026-03-13, 커밋 `dc2bdbf`)
+
+### 백엔드 신규 파일
+| 파일 | 설명 |
+|------|------|
+| `V2__oauth.sql` | Flyway 마이그레이션 — `users` 테이블에 `oauth_provider`, `oauth_subject` 추가, `password_hash` nullable |
+| `OAuthService.java` | provider/subject 기준 사용자 조회 → 이메일 매칭 → 신규 생성 |
+| `CustomOAuth2UserService.java` | `DefaultOAuth2UserService` 확장, Google/GitHub attributes 정규화 |
+| `OAuthSuccessHandler.java` | OAuth 성공 후 `/oauth/callback?access_token=...` 리다이렉트 |
+| `DbmlParser.java` | 라인 기반 DBML 파서 (`Table { }`, `Ref:`, 인라인 ref 옵션) |
+| `DbmlGenerator.java` | `TableDef`/`RelationshipDef` → DBML 문자열 |
+| `JdbcSchemaExtractor.java` | `DatabaseMetaData` 기반 테이블/컬럼/FK 추출, H2/PostgreSQL/MySQL URL 빌더 |
+| `JdbcController.java` | `POST /api/v1/jdbc/extract` |
+| `ProjectTemplateService.java` | e-commerce / blog 스타터 템플릿 적용, 충돌 시 suffix 처리 |
+
+### 프론트엔드 신규 파일
+| 파일 | 설명 |
+|------|------|
+| `hooks/useTheme.ts` | localStorage + `<html class="dark">` 기반 다크모드 토글 |
+| `hooks/useTheme.test.ts` | F-DARK-01~05 (5개 테스트) |
+| `hooks/useFollowMode.ts` | Yjs awareness 뷰포트 팔로우, 오프라인 시 자동 해제 |
+| `hooks/useFollowMode.test.ts` | F-FOLLOW-01~04 (4개 테스트) |
+
+### 테스트 결과 (Phase 5 완료 시점)
+- 백엔드: 35개 신규 (B-OAUTH×7, B-DBML×10, B-JDBC×11, B-TPL×7)
+- 프론트엔드: 9개 신규 (F-DARK×5, F-FOLLOW×4)
+
+---
+
+## 9. 전체 누적 테스트 현황 (2026-03-13 최종)
+
+| Phase | 백엔드 신규 | 프론트엔드 신규 |
+|-------|-----------|--------------|
+| Phase 1 | 48개 | 20개 |
+| Phase 2 | +16개 | +19개 |
+| Phase 3 | +40개 | +11개 |
+| Phase 4 | +38개 | +10개 |
+| Phase 5 | +35개 | +9개 |
+| 후속 버그픽스/개선 | +4개 | 0개 |
+| **합계** | **181개** | **69개** |
+
+> `JAVA_HOME=/c/Users/questiongs/.jdks/ms-21.0.10 ./mvnw test` — 백엔드 전체 181개 통과
+> `npm test -- --run` — 프론트엔드 전체 69개 통과

@@ -295,16 +295,35 @@ product_tag (product_id FK→product, tag_id FK→tag) -- M:N 조인 테이블
 
 ## 6. 완료 기준 (Definition of Done)
 
-- [x] MySQL DDL 생성기 단위 테스트 통과 (B-MYSQL-01~11, 총 11개)
+- [x] MySQL DDL 생성기 단위 테스트 통과 (B-MYSQL-01~12, 총 12개) — B-MYSQL-12 컬럼 주석 추가
 - [x] Oracle DDL 생성기 단위 테스트 통과 (B-ORA-01~08, 총 8개)
-- [x] MSSQL DDL 생성기 단위 테스트 통과 (B-MSSQL-01~07, 총 7개)
+- [x] MSSQL DDL 생성기 단위 테스트 통과 (B-MSSQL-01~09, 총 9개) — B-MSSQL-08~09 sp_addextendedproperty 추가
 - [x] DDL 파서 단위 테스트 B-PARSE-01 ~ B-PARSE-14 통과 (총 14개, 인라인 FK 지원 포함)
 - [x] DDL 프리뷰 패널 테스트 통과 (F-DDL-01~05, 총 5개)
 - [x] JSON 내보내기/가져오기 테스트 통과 (F-JSON-01~03, 총 3개)
 - [x] PNG 내보내기 테스트 통과 (F-PNG-01~03, 총 3개)
-- [x] 백엔드 전체 테스트 104개 통과 (`mvn test`)
-- [x] 프론트엔드 전체 테스트 50개 통과 (`npm test`)
+- [x] 백엔드 전체 테스트 104개 통과 (`mvn test`) — Phase 3 완료 시점 기준
+- [x] 프론트엔드 전체 테스트 50개 통과 (`npm test`) — Phase 3 완료 시점 기준
 - [ ] 생성된 PostgreSQL/MySQL DDL을 실제 DB에서 에러 없이 실행 확인
 - [ ] E2E-DDL-02 (DDL 파싱 → ERD 자동 생성) 검증 완료
 - [ ] E2E-EXPORT-01 (JSON 라운드트립) 데이터 손실 없음
 - [ ] E2E-EXPORT-02 (PNG 내보내기) 유효한 이미지 파일 생성
+
+---
+
+## 7. 구현 완료 내역 (2026-03-13)
+
+### 테스트 파일
+- `MySqlDdlGeneratorTest.java` — B-MYSQL-01~12 (12개 테스트)
+- `OracleDdlGeneratorTest.java` — B-ORA-01~08 (8개 테스트)
+- `MssqlDdlGeneratorTest.java` — B-MSSQL-01~09 (9개 테스트)
+- `DdlParserTest.java` — B-PARSE-01~14 (14개 테스트)
+- `DdlPreviewPanel.test.tsx` — F-DDL-01~05 (5개 테스트)
+- `useSchema.test.ts` 내 JSON 내보내기 — F-JSON-01~03
+- PNG 내보내기 — F-PNG-01~03
+
+### 후속 추가 구현 (커밋 `e7c7df5`)
+- **MySQL**: 컬럼별 `COMMENT 'text'` 인라인 주석 지원 (B-MYSQL-12)
+- **MSSQL**: 테이블·컬럼 주석을 `EXEC sp_addextendedproperty N'MS_Description'` 구문으로 출력 (B-MSSQL-08~09)
+- **Oracle**: 컬럼 주석 `COMMENT ON COLUMN "t"."c" IS '...'` 지원은 Phase 3 최초 구현 시 완료
+- **프론트엔드 `ddlGenerator.ts`**: MySQL 컬럼 주석, MSSQL sp_addextendedproperty 로컬 생성에도 동일 적용
