@@ -36,6 +36,15 @@ app:
   mail:
     from: noreply@erdsketch.fly.dev
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
 logging:
   level:
     com.erdsketch: INFO
