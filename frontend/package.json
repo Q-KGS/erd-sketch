@@ -15,7 +15,7 @@
     "test:e2e:integration:ci": "playwright test --config=playwright.config.integration.ts --reporter=github",
     "test:e2e:phase5": "playwright test --config=playwright.config.phase5.ts",
     "test:e2e:phase5:ci": "playwright test --config=playwright.config.phase5.ts --reporter=github",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

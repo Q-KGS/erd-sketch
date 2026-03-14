@@ -5,6 +5,7 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL || (isCI ? 'http://localhost:417
 
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: ['**/phase4/**', '**/phase5/**'],
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,

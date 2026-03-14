@@ -50,7 +50,7 @@ export function useFollowMode(
 
       // awareness 상태에서 팔로우 대상 찾기
       let found = false
-      awareness.getStates().forEach((state, _clientId) => {
+      awareness.getStates().forEach((state) => {
         if (state?.user?.id === targetId) {
           found = true
           const viewport = state?.viewport as Viewport | undefined

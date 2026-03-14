@@ -9,15 +9,15 @@ vi.mock('react-hot-toast', () => ({
 
 // Awareness mock 팩토리
 function makeAwareness() {
-  const listeners: Map<string, Set<Function>> = new Map()
+  const listeners: Map<string, Set<() => void>> = new Map()
   const states: Map<number, Record<string, unknown>> = new Map()
 
   const awareness = {
-    on: vi.fn((event: string, fn: Function) => {
+    on: vi.fn((event: string, fn: () => void) => {
       if (!listeners.has(event)) listeners.set(event, new Set())
       listeners.get(event)!.add(fn)
     }),
-    off: vi.fn((event: string, fn: Function) => {
+    off: vi.fn((event: string, fn: () => void) => {
       listeners.get(event)?.delete(fn)
     }),
     getStates: vi.fn(() => states),
