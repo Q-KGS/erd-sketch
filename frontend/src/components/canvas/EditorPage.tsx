@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react'
+import { useEffect, useCallback, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   ReactFlow, ReactFlowProvider, Background, Controls, MiniMap,
@@ -9,6 +9,7 @@ import '@xyflow/react/dist/style.css'
 import { useQuery } from '@tanstack/react-query'
 import { projectApi } from '@/api/project'
 import { workspaceApi } from '@/api/workspace'
+import { dbmlApi } from '@/api/dbml'
 import { useEditorStore } from '@/store/editorStore'
 import { useAuthStore } from '@/store/authStore'
 import { downloadSchemaJson } from '@/utils/schemaExport'
@@ -16,6 +17,8 @@ import toast from 'react-hot-toast'
 import { toPng } from 'html-to-image'
 import { useYjs } from '@/hooks/useYjs'
 import { useSchema } from '@/hooks/useSchema'
+import { useFollowMode } from '@/hooks/useFollowMode'
+import { addTableToYdoc, addRelationshipToYdoc } from '@/crdt/schemaConverter'
 import TableNode from './TableNode'
 import RelationshipEdge from './RelationshipEdge'
 import EditorToolbar from '../toolbar/EditorToolbar'
@@ -23,13 +26,40 @@ import TableEditorPanel from '../editor/TableEditorPanel'
 import RelationshipEditorPanel from '../editor/RelationshipEditorPanel'
 import DdlPreviewPanel from '../ddl/DdlPreviewPanel'
 import CollaborationPresence from '../collaboration/CollaborationPresence'
+import FollowModeBanner from '../collaboration/FollowModeBanner'
 import VersionHistoryPanel from '../version/VersionHistoryPanel'
 import CommentPanel from '../comment/CommentPanel'
+import DbmlImportModal from '../dbml/DbmlImportModal'
+import JdbcConnectionModal from '../jdbc/JdbcConnectionModal'
+import TemplatePicker from '../template/TemplatePicker'
 import { applyAutoLayout } from '@/utils/autoLayout'
 import type { TableDef, RelationshipDef } from '@/models'
+import { v4 as uuidv4 } from 'uuid'
 
 const nodeTypes = { table: TableNode }
 const edgeTypes = { relationship: RelationshipEdge }
+
+// Convert backend table format (from DBML/template/JDBC) to frontend TableDef format
+function backendTableToTableDef(t: Record<string, unknown>, position?: { x: number; y: number }): Omit<TableDef, 'id'> {
+  const rawPos = (t.position as { x: number; y: number } | undefined) ?? position ?? { x: 0, y: 0 }
+  const rawCols = (t.columns as Record<string, unknown>[]) ?? []
+  return {
+    name: (t.name as string) ?? 'table',
+    position: rawPos,
+    columns: rawCols.map((c, idx) => ({
+      id: (c.id as string) ?? uuidv4(),
+      name: (c.name as string) ?? 'col',
+      dataType: (c.dataType as string) ?? (c.type as string) ?? 'VARCHAR',
+      nullable: (c.nullable as boolean) ?? true,
+      isPrimaryKey: (c.isPrimaryKey as boolean) ?? false,
+      isUnique: (c.isUnique as boolean) ?? false,
+      isAutoIncrement: (c.isAutoIncrement as boolean) ?? false,
+      defaultValue: (c.defaultValue as string | undefined) ?? undefined,
+      order: idx,
+    })),
+    indexes: [],
+  }
+}
 
 export default function EditorPage() {
   return (
@@ -46,10 +76,18 @@ function EditorCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const canvasRef = useRef<HTMLDivElement>(null)
-  const { screenToFlowPosition } = useReactFlow()
+  const { screenToFlowPosition, setViewport } = useReactFlow()
+
+  // Modal states
+  const [dbmlImportOpen, setDbmlImportOpen] = useState(false)
+  const [jdbcOpen, setJdbcOpen] = useState(false)
+  const [templateOpen, setTemplateOpen] = useState(false)
+  const [followingName, setFollowingName] = useState<string | null>(null)
 
   const { ydoc, awareness, isConnected } = useYjs(documentId ?? null)
   const { schema, addTable, addRelationship, updateRelationship, deleteTable, deleteRelationship, updateTable } = useSchema(ydoc)
+
+  const { followingUserId, startFollowing, stopFollowing } = useFollowMode(awareness, setViewport)
 
   const { data: project } = useQuery({
     queryKey: ['project', projectId],
@@ -137,7 +175,6 @@ function EditorCanvas() {
   const handleAutoLayout = useCallback(() => {
     const laid = applyAutoLayout(nodes, edges)
     setNodes(laid)
-    // Yjs에 새 position 동기화
     laid.forEach((node) => {
       updateTable(node.id, { position: node.position })
     })
@@ -200,6 +237,114 @@ function EditorCanvas() {
     }
   }, [documentId, project?.name])
 
+  const handleExportDbml = useCallback(async () => {
+    const tables = Object.values(schema.tables) as unknown as Record<string, unknown>[]
+    const relationships = Object.values(schema.relationships) as unknown as Record<string, unknown>[]
+    try {
+      const dbml = await dbmlApi.generate(tables, relationships)
+      const blob = new Blob([dbml], { type: 'text/plain' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${project?.name ?? 'erdsketch'}_${new Date().toISOString().slice(0, 10)}.dbml`
+      a.click()
+      URL.revokeObjectURL(url)
+      toast.success('DBML로 내보냈습니다.')
+    } catch {
+      toast.error('DBML 내보내기에 실패했습니다.')
+    }
+  }, [schema, project?.name])
+
+  // Import from DBML parse result: tables use name-based relationships
+  const handleDbmlImport = useCallback((tables: Record<string, unknown>[], relationships: Record<string, unknown>[]) => {
+    if (!ydoc) return
+    const nameToId: Record<string, string> = {}
+
+    ydoc.transact(() => {
+      tables.forEach((t, i) => {
+        const tableDef = backendTableToTableDef(t, { x: i * 250, y: 0 })
+        const id = addTableToYdoc(ydoc, tableDef)
+        nameToId[(t.name as string)] = id
+      })
+    })
+
+    ydoc.transact(() => {
+      relationships.forEach((r) => {
+        const sourceTableId = nameToId[r.sourceTable as string]
+        const targetTableId = nameToId[r.targetTable as string]
+        if (!sourceTableId || !targetTableId) return
+        addRelationshipToYdoc(ydoc, {
+          sourceTableId,
+          sourceColumnIds: [],
+          targetTableId,
+          targetColumnIds: [],
+          cardinality: (r.cardinality as RelationshipDef['cardinality']) ?? '1:N',
+          onDelete: (r.onDelete as RelationshipDef['onDelete']) ?? 'RESTRICT',
+          onUpdate: (r.onUpdate as RelationshipDef['onUpdate']) ?? 'RESTRICT',
+        })
+      })
+    })
+  }, [ydoc])
+
+  // Import from JDBC: only tables, no relationships
+  const handleJdbcImport = useCallback((tables: Record<string, unknown>[]) => {
+    if (!ydoc) return
+    ydoc.transact(() => {
+      tables.forEach((t, i) => {
+        const tableDef = backendTableToTableDef(t, { x: (i % 4) * 260, y: Math.floor(i / 4) * 220 })
+        addTableToYdoc(ydoc, tableDef)
+      })
+    })
+  }, [ydoc])
+
+  // Import from template: tables use name-based relationships
+  const handleTemplateApply = useCallback((tables: Record<string, unknown>[], relationships: Record<string, unknown>[]) => {
+    if (!ydoc) return
+    const nameToId: Record<string, string> = {}
+
+    ydoc.transact(() => {
+      tables.forEach((t) => {
+        const tableDef = backendTableToTableDef(t)
+        const id = addTableToYdoc(ydoc, tableDef)
+        nameToId[(t.name as string)] = id
+      })
+    })
+
+    ydoc.transact(() => {
+      relationships.forEach((r) => {
+        const sourceTableId = nameToId[r.sourceTable as string]
+        const targetTableId = nameToId[r.targetTable as string]
+        if (!sourceTableId || !targetTableId) return
+        addRelationshipToYdoc(ydoc, {
+          sourceTableId,
+          sourceColumnIds: [],
+          targetTableId,
+          targetColumnIds: [],
+          cardinality: (r.cardinality as RelationshipDef['cardinality']) ?? '1:N',
+          onDelete: (r.onDelete as RelationshipDef['onDelete']) ?? 'NO_ACTION',
+          onUpdate: (r.onUpdate as RelationshipDef['onUpdate']) ?? 'NO_ACTION',
+        })
+      })
+    })
+  }, [ydoc])
+
+  const handleFollowUser = useCallback((userId: string, name: string) => {
+    startFollowing(userId)
+    setFollowingName(name)
+  }, [startFollowing])
+
+  const handleStopFollowing = useCallback(() => {
+    stopFollowing()
+    setFollowingName(null)
+  }, [stopFollowing])
+
+  // Stop follow mode on user interaction with canvas
+  const handleMoveStart = useCallback(() => {
+    if (followingUserId) {
+      handleStopFollowing()
+    }
+  }, [followingUserId, handleStopFollowing])
+
   const handleNodeDragStop = useCallback(
     (_: React.MouseEvent, node: Node) => {
       if (isReadOnly) return
@@ -217,7 +362,7 @@ function EditorCanvas() {
   const selectedRelationship = selectionType === 'relationship' && selectedId ? schema.relationships[selectedId] : null
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100">
+    <div className="h-screen flex flex-col bg-gray-100 dark:bg-gray-900">
       <EditorToolbar
         projectName={project?.name ?? ''}
         targetDbType={project?.targetDbType ?? 'POSTGRESQL'}
@@ -230,6 +375,10 @@ function EditorCanvas() {
         onExportJson={handleExportJson}
         onExportPng={handleExportPng}
         onExportPdf={handleExportPdf}
+        onExportDbml={handleExportDbml}
+        onImportDbml={() => setDbmlImportOpen(true)}
+        onOpenJdbc={() => setJdbcOpen(true)}
+        onOpenTemplate={() => setTemplateOpen(true)}
         onToggleVersion={toggleVersionPanel}
         onToggleComment={toggleCommentPanel}
         awareness={awareness}
@@ -247,6 +396,7 @@ function EditorCanvas() {
             onNodesDelete={isReadOnly ? undefined : onNodesDelete}
             onEdgesDelete={isReadOnly ? undefined : onEdgesDelete}
             onNodeDragStop={isReadOnly ? undefined : handleNodeDragStop}
+            onMoveStart={handleMoveStart}
             nodesDraggable={!isReadOnly}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
@@ -257,8 +407,16 @@ function EditorCanvas() {
             <Background />
             <Controls />
             <MiniMap />
-            {awareness && <CollaborationPresence awareness={awareness} />}
+            {awareness && (
+              <CollaborationPresence
+                awareness={awareness}
+                onFollowUser={!isReadOnly ? handleFollowUser : undefined}
+              />
+            )}
           </ReactFlow>
+          {followingUserId && followingName && (
+            <FollowModeBanner followingName={followingName} onStop={handleStopFollowing} />
+          )}
         </div>
 
         {selectedTable && !isReadOnly && (
@@ -274,17 +432,27 @@ function EditorCanvas() {
         )}
 
         {isVersionPanelOpen && documentId && (
-          <div className="w-72 border-l border-gray-200 bg-white overflow-y-auto">
+          <div className="w-72 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-y-auto">
             <VersionHistoryPanel documentId={documentId} />
           </div>
         )}
 
         {isCommentPanelOpen && documentId && (
-          <div className="w-72 border-l border-gray-200 bg-white overflow-y-auto">
+          <div className="w-72 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-y-auto">
             <CommentPanel documentId={documentId} />
           </div>
         )}
       </div>
+
+      {dbmlImportOpen && (
+        <DbmlImportModal onClose={() => setDbmlImportOpen(false)} onImport={handleDbmlImport} />
+      )}
+      {jdbcOpen && (
+        <JdbcConnectionModal onClose={() => setJdbcOpen(false)} onImport={handleJdbcImport} />
+      )}
+      {templateOpen && (
+        <TemplatePicker onClose={() => setTemplateOpen(false)} onApply={handleTemplateApply} />
+      )}
     </div>
   )
 }
