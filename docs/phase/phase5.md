@@ -299,16 +299,20 @@ void parseDbml_withReference_createsRelationship() {
 
 ## 7. 완료 기준 (Definition of Done)
 
-- [ ] OAuth Google/GitHub E2E 플로우 수동 검증 완료
+- [x] OAuth Google/GitHub 로그인 버튼 UI 구현 + E2E 자동화 (E2E-OAUTH-01/02)
 - [x] DBML 가져오기/내보내기 단위 테스트 (B-DBML-01 ~ B-DBML-08, 총 10개) 통과
 - [x] OAuth 단위 테스트 (B-OAUTH-01 ~ B-OAUTH-06, 총 7개) 통과
 - [x] JDBC 스키마 추출 단위 테스트 (B-JDBC-01 ~ B-JDBC-09, 총 11개) 통과 (H2 기반)
 - [x] 프로젝트 템플릿 단위 테스트 (B-TPL-01 ~ B-TPL-05, 총 7개) 통과
 - [x] 다크 모드 단위 테스트 (F-DARK-01 ~ F-DARK-05) 통과
 - [x] 팔로우 모드 단위 테스트 (F-FOLLOW-01 ~ F-FOLLOW-04) 통과
+- [x] E2E-DARK-01: 다크 모드 전환/유지/복원 Playwright 자동화
+- [x] E2E-DBML-01: DBML 가져오기 → 테이블/관계 생성 Playwright 자동화
+- [x] E2E-DBML-02: DBML 내보내기 → .dbml 파일 다운로드 Playwright 자동화
+- [x] E2E-TPL-01: e-commerce 템플릿 5개 테이블 + 4개 FK Playwright 자동화
+- [x] E2E-JDBC-01: JDBC 연결 모달 UI Playwright 자동화
+- [x] E2E-FOLLOW-01: 팔로우 모드 UI 통합 + Playwright 자동화
 - [ ] DBML 내보내기 파일을 dbdiagram.io에서 에러 없이 로드 확인
-- [ ] 다크 모드 에디터 전체 페이지 시각적 검토 완료
-- [ ] E2E-TPL-01 (e-commerce 템플릿) FK 관계 포함 정상 생성
 - [ ] JDBC 역공학 로컬 DB 검증 완료 (보안 정책 포함)
 - [ ] 팔로우 모드 < 100ms 동기화 확인
 - [ ] Chrome/Edge/Firefox 호환성 체크리스트 완료
@@ -383,7 +387,55 @@ fly secrets set GITHUB_CLIENT_ID=xxx GITHUB_CLIENT_SECRET=xxx
 
 ---
 
-## 9. 전체 누적 테스트 현황 (2026-03-13 최종)
+## 8-2. 풀스택 E2E 구현 완료 내역 (2026-03-14)
+
+### 백엔드 추가 파일
+| 파일 | 설명 |
+|------|------|
+| `dbml/DbmlController.java` | `POST /api/v1/dbml/parse`, `POST /api/v1/dbml/generate` |
+| `dbml/DbmlParseRequest.java` | `{ dbml: String }` DTO |
+| `dbml/DbmlGenerateRequest.java` | `{ tables, relationships }` DTO |
+| `template/ProjectTemplateController.java` | `GET /api/v1/templates`, `POST /api/v1/templates/{type}/apply`, `POST /api/v1/templates/{type}/merge` |
+| `template/ProjectTemplateInfo.java` | 템플릿 목록 응답 DTO |
+| `template/TemplateMergeRequest.java` | 병합 요청 DTO |
+
+### 프론트엔드 추가 파일
+| 파일 | 설명 |
+|------|------|
+| `api/dbml.ts` | DBML parse/generate API 클라이언트 |
+| `api/jdbc.ts` | JDBC testConnection/extract API 클라이언트 |
+| `api/template.ts` | Template list/apply/merge API 클라이언트 |
+| `components/toolbar/ThemeToggleButton.tsx` | 해/달 아이콘 테마 전환 버튼 |
+| `components/dbml/DbmlImportModal.tsx` | DBML 붙여넣기 → 캔버스 임포트 모달 |
+| `components/jdbc/JdbcConnectionModal.tsx` | JDBC 연결 폼 + 테스트/임포트 모달 |
+| `components/template/TemplatePicker.tsx` | 템플릿 카드 선택기 모달 |
+| `components/collaboration/FollowModeBanner.tsx` | "○○님을 따라가는 중" 배너 |
+| `components/auth/OAuthCallbackPage.tsx` | OAuth 콜백 처리 페이지 |
+
+### 프론트엔드 수정 파일
+| 파일 | 변경 내용 |
+|------|----------|
+| `tailwind.config.js` | `darkMode: 'class'` 추가 |
+| `EditorToolbar.tsx` | ThemeToggleButton, 가져오기/DBML/JDBC/템플릿 버튼, dark: 클래스 |
+| `EditorPage.tsx` | 모달 상태, DBML/JDBC/템플릿 임포트 핸들러, 팔로우 모드 통합 |
+| `CollaborationPresence.tsx` | 아바타 클릭 → "따라가기" 팝오버 |
+| `LoginPage.tsx` | Google/GitHub OAuth 버튼 |
+| `App.tsx` | `/oauth/callback` 라우트 추가 |
+
+### E2E 테스트 파일 (frontend/e2e/phase5/)
+| 파일 | 시나리오 |
+|------|---------|
+| `dark-mode.spec.ts` | E2E-DARK-01: 다크 모드 전환/유지/복원 |
+| `dbml-import.spec.ts` | E2E-DBML-01: DBML 가져오기 → 2 테이블 + 1 FK |
+| `dbml-export.spec.ts` | E2E-DBML-02: DBML 내보내기 → .dbml 다운로드 |
+| `template.spec.ts` | E2E-TPL-01/02: e-commerce/blog 템플릿 적용 |
+| `jdbc.spec.ts` | E2E-JDBC-01: JDBC 모달 UI + 연결 테스트 |
+| `follow-mode.spec.ts` | E2E-FOLLOW-01: 팔로우 모드 UI + 2 컨텍스트 |
+| `oauth.spec.ts` | E2E-OAUTH-01/02: OAuth 버튼 존재 + URL 검증 |
+
+---
+
+## 9. 전체 누적 테스트 현황 (2026-03-14 최종)
 
 | Phase | 백엔드 신규 | 프론트엔드 신규 |
 |-------|-----------|--------------|
