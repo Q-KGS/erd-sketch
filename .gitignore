@@ -21,3 +21,6 @@ Thumbs.db
 
 # Docker
 .docker/
+
+# Local secrets (OAuth credentials, etc.)
+backend/src/main/resources/application-local.yml

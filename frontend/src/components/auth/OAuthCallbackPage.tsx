@@ -8,8 +8,8 @@ export default function OAuthCallbackPage() {
   const { setAuth } = useAuthStore()
 
   useEffect(() => {
-    const token = searchParams.get('token')
-    const refreshToken = searchParams.get('refreshToken')
+    const token = searchParams.get('access_token')
+    const refreshToken = searchParams.get('refresh_token')
 
     if (token && refreshToken) {
       // Fetch user info using token
