@@ -35,8 +35,8 @@ test('E2E-DBML-01: DBML 가져오기 → 2개 테이블 + 1개 관계 생성', a
   // Paste DBML
   await page.locator('textarea').fill(SAMPLE_DBML)
 
-  // Click import
-  await page.getByRole('button', { name: '가져오기' }).click()
+  // Click import (modal submit button — use last to avoid toolbar button)
+  await page.getByRole('button', { name: '가져오기' }).last().click()
 
   // Wait for toast success
   await expect(page.getByText(/테이블.*가져왔습니다/)).toBeVisible({ timeout: 8000 })

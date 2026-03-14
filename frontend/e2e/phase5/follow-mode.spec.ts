@@ -45,14 +45,26 @@ test('E2E-FOLLOW-01: 팔로우 모드 - 두 사용자 시나리오', async ({ pa
   })
   await inviteApi.dispose()
 
-  // Login as user 2 in a fresh browser context (unauthenticated)
-  const context2 = await browser.newContext()
+  // Login as user 2 via API and inject auth state into a new context
+  const loginApi = await pwRequest.newContext({ baseURL: BASE_URL })
+  const loginRes = await loginApi.post('/api/v1/auth/login', {
+    data: { email: USER2_EMAIL, password: USER2_PASSWORD },
+    failOnStatusCode: false,
+  })
+  const { user: user2, tokens: tokens2 } = await loginRes.json()
+  await loginApi.dispose()
+  const user2StorageState = {
+    cookies: [],
+    origins: [{
+      origin: BASE_URL,
+      localStorage: [{
+        name: 'erdsketch-auth',
+        value: JSON.stringify({ state: { user: user2, tokens: tokens2, isAuthenticated: true }, version: 0 }),
+      }],
+    }],
+  }
+  const context2 = await browser.newContext({ storageState: user2StorageState })
   const page2 = await context2.newPage()
-  await page2.goto(`${BASE_URL}/login`)
-  await page2.getByLabel(/이메일/i).fill(USER2_EMAIL)
-  await page2.getByLabel(/비밀번호/i).fill(USER2_PASSWORD)
-  await page2.getByRole('button', { name: /로그인/i }).click()
-  await page2.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 15000 })
 
   // Navigate user 2 to the same editor
   await page2.goto(`${BASE_URL}${editorUrl}`)
