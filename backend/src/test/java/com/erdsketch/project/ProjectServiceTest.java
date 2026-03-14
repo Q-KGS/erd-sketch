@@ -1,5 +1,6 @@
 package com.erdsketch.project;
 
+import com.erdsketch.common.exception.ResourceNotFoundException;
 import com.erdsketch.support.BaseIntegrationTest;
 import com.erdsketch.support.MockUserSupport;
 import com.erdsketch.support.TestDataFactory;
@@ -108,7 +109,7 @@ class ProjectServiceTest extends BaseIntegrationTest {
 
         projectService.delete(created.id(), member.getId());
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ResourceNotFoundException.class,
                 () -> projectService.get(created.id(), member.getId()));
     }
 

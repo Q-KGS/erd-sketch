@@ -1,5 +1,6 @@
 package com.erdsketch.auth;
 
+import com.erdsketch.common.exception.DuplicateResourceException;
 import com.erdsketch.support.BaseIntegrationTest;
 import com.erdsketch.user.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -42,8 +43,8 @@ class AuthServiceTest extends BaseIntegrationTest {
                         .content("""
                                 {"email":"dup@b.com","password":"pass1234","displayName":"Bob"}
                                 """))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.detail").value("Email already exists"));
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("Email already exists")));
     }
 
     // ───── B-AUTH-03: 비밀번호 8자 미만 ─────
@@ -141,7 +142,7 @@ class AuthServiceTest extends BaseIntegrationTest {
     @Test
     void 회원가입_서비스_레벨_중복이메일_예외() {
         authService.register(new RegisterRequest("svc@b.com", "pass1234", "Alice"));
-        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+        org.junit.jupiter.api.Assertions.assertThrows(DuplicateResourceException.class,
                 () -> authService.register(new RegisterRequest("svc@b.com", "pass1234", "Bob")));
     }
 

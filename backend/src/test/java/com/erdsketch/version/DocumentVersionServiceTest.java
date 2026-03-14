@@ -2,6 +2,7 @@ package com.erdsketch.version;
 
 import com.erdsketch.collaboration.SnapshotScheduler;
 import com.erdsketch.collaboration.YjsWebSocketHandler;
+import com.erdsketch.common.exception.ResourceNotFoundException;
 import com.erdsketch.document.DocumentRepository;
 import com.erdsketch.document.DocumentService;
 import com.erdsketch.document.ErdDocument;
@@ -257,9 +258,9 @@ class DocumentVersionServiceTest {
                 .isInstanceOf(AccessDeniedException.class);
     }
 
-    // ───── B-VER-08: 존재하지 않는 버전 → IllegalArgumentException ─────
+    // ───── B-VER-08: 존재하지 않는 버전 → ResourceNotFoundException ─────
     @Test
-    void B_VER_08_존재하지_않는_버전_조회_시_IllegalArgumentException() {
+    void B_VER_08_존재하지_않는_버전_조회_시_ResourceNotFoundException() {
         // given
         UUID nonExistentVersionId = UUID.randomUUID();
         given(documentRepository.findById(documentId)).willReturn(Optional.of(document));
@@ -268,7 +269,6 @@ class DocumentVersionServiceTest {
 
         // when & then
         assertThatThrownBy(() -> versionService.getVersion(documentId, nonExistentVersionId, userId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Version not found");
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 }

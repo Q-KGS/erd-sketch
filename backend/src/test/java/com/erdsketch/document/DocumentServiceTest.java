@@ -2,6 +2,7 @@ package com.erdsketch.document;
 
 import com.erdsketch.project.Project;
 import com.erdsketch.project.ProjectRepository;
+import com.erdsketch.common.exception.ResourceNotFoundException;
 import com.erdsketch.support.BaseIntegrationTest;
 import com.erdsketch.support.TestDataFactory;
 import com.erdsketch.user.User;
@@ -79,7 +80,7 @@ class DocumentServiceTest extends BaseIntegrationTest {
 
         documentService.delete(doc.id(), member.getId());
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ResourceNotFoundException.class,
                 () -> documentService.get(doc.id(), member.getId()));
     }
 

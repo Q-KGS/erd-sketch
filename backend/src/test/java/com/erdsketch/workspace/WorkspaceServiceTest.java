@@ -1,5 +1,7 @@
 package com.erdsketch.workspace;
 
+import com.erdsketch.common.exception.DuplicateResourceException;
+import com.erdsketch.common.exception.ResourceNotFoundException;
 import com.erdsketch.support.BaseIntegrationTest;
 import com.erdsketch.support.MockUserSupport;
 import com.erdsketch.support.TestDataFactory;
@@ -61,7 +63,7 @@ class WorkspaceServiceTest extends BaseIntegrationTest {
     @Test
     void B_WS_02_중복_슬러그_생성_예외() {
         String slug = workspace.getSlug();
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(DuplicateResourceException.class,
                 () -> workspaceService.create(new CreateWorkspaceRequest("Dup", slug), owner.getId()));
     }
 
@@ -106,7 +108,7 @@ class WorkspaceServiceTest extends BaseIntegrationTest {
     // ───── B-WS-07: 없는 이메일로 초대 → 예외 ─────
     @Test
     void B_WS_07_없는_이메일_초대_예외() {
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(ResourceNotFoundException.class, () ->
                 workspaceService.inviteMember(
                         workspace.getId(),
                         new InviteMemberRequest("nobody@nowhere.com", WorkspaceRole.MEMBER),
