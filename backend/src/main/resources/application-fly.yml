@@ -40,6 +40,9 @@ spring:
             client-secret: ${GITHUB_CLIENT_SECRET}
             scope: user:email, read:user
 
+server:
+  forward-headers-strategy: native
+
 app:
   jwt:
     secret: ${JWT_SECRET}
