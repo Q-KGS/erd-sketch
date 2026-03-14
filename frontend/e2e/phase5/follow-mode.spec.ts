@@ -1,7 +1,8 @@
-import { test, expect, chromium } from '@playwright/test'
-import { AUTH_FILE, E2E_EMAIL, E2E_PASSWORD } from './global-setup'
-import { createEditorPageWithIds } from './helpers'
+import { test, expect } from '@playwright/test'
 import { request as pwRequest } from '@playwright/test'
+import { AUTH_FILE } from './global-setup'
+import { createEditorPageWithIds } from './helpers'
+import fs from 'fs'
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080'
 
@@ -12,8 +13,17 @@ const USER2_NAME = 'Phase5 User2'
 
 test.use({ storageState: AUTH_FILE })
 
+function getUser1Token(): string {
+  const state = JSON.parse(fs.readFileSync(AUTH_FILE, 'utf-8'))
+  const authStorage = state.origins?.[0]?.localStorage?.find(
+    (i: { name: string }) => i.name === 'erdsketch-auth'
+  )
+  if (!authStorage) throw new Error('auth-storage not found')
+  return JSON.parse(authStorage.value).state.tokens.accessToken
+}
+
 test('E2E-FOLLOW-01: 팔로우 모드 - 두 사용자 시나리오', async ({ page, browser }) => {
-  // Register second user
+  // Register second user (ignore 409 if already exists)
   const api = await pwRequest.newContext({ baseURL: BASE_URL })
   await api.post('/api/v1/auth/register', {
     data: { email: USER2_EMAIL, password: USER2_PASSWORD, displayName: USER2_NAME },
@@ -24,7 +34,18 @@ test('E2E-FOLLOW-01: 팔로우 모드 - 두 사용자 시나리오', async ({ pa
   // User 1: create editor page
   const { editorUrl, workspaceId } = await createEditorPageWithIds(page)
 
-  // Login as user 2 in a second context
+  // User 1 invites user 2 to the workspace so user 2 can access the editor
+  const inviteApi = await pwRequest.newContext({
+    baseURL: BASE_URL,
+    extraHTTPHeaders: { Authorization: `Bearer ${getUser1Token()}` },
+  })
+  await inviteApi.post(`/api/v1/workspaces/${workspaceId}/members`, {
+    data: { email: USER2_EMAIL, role: 'MEMBER' },
+    failOnStatusCode: false,
+  })
+  await inviteApi.dispose()
+
+  // Login as user 2 in a fresh browser context (unauthenticated)
   const context2 = await browser.newContext()
   const page2 = await context2.newPage()
   await page2.goto(`${BASE_URL}/login`)
@@ -37,9 +58,7 @@ test('E2E-FOLLOW-01: 팔로우 모드 - 두 사용자 시나리오', async ({ pa
   await page2.goto(`${BASE_URL}${editorUrl}`)
   await page2.waitForSelector('.react-flow', { timeout: 15000 })
 
-  // User 1 should see user 2's avatar appear in presence area (may take a moment for Yjs to sync)
-  // Since WebSocket requires live backend, presence avatars may not appear in all E2E envs.
-  // We verify the follow mode banner/button exists if a collaborator appears.
+  // Wait for Yjs presence to sync
   await page.waitForTimeout(2000)
 
   // Check if a collaborator avatar appeared for user 1
@@ -47,21 +66,16 @@ test('E2E-FOLLOW-01: 팔로우 모드 - 두 사용자 시나리오', async ({ pa
   const avatarCount = await avatars.count()
 
   if (avatarCount > 0) {
-    // Click first avatar to open popover
     await avatars.first().click()
     await expect(page.getByRole('button', { name: '따라가기' })).toBeVisible({ timeout: 3000 })
 
-    // Start following
     await page.getByRole('button', { name: '따라가기' }).click()
-
-    // Follow mode banner should appear
     await expect(page.getByText(/을 따라가는 중/)).toBeVisible({ timeout: 3000 })
 
-    // Stop following via banner
     await page.getByRole('button', { name: '해제' }).click()
     await expect(page.getByText(/을 따라가는 중/)).not.toBeVisible({ timeout: 3000 })
   } else {
-    // Collaboration presence requires real-time connection; skip if no avatars
+    // Collaboration presence requires real-time WebSocket; skip if unavailable
     test.info().annotations.push({ type: 'skip-reason', description: 'No collaborator avatar visible (WebSocket may not be available)' })
   }
 
