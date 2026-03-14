@@ -1,4 +1,4 @@
-import { chromium, request } from '@playwright/test'
+import { request } from '@playwright/test'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
@@ -13,22 +13,44 @@ export const AUTH_FILE = path.join(__dirname, '.auth/user.json')
 
 export default async function globalSetup() {
   const authDir = path.dirname(AUTH_FILE)
-  if (!fs.existsSync(authDir)) fs.mkdirSync(authDir, { recursive: true })
+  fs.mkdirSync(authDir, { recursive: true })
 
   const apiContext = await request.newContext({ baseURL: BASE_URL })
+
+  // Register (ignore 409 if user already exists)
   await apiContext.post('/api/v1/auth/register', {
     data: { email: E2E_EMAIL, password: E2E_PASSWORD, displayName: E2E_NAME },
     failOnStatusCode: false,
   })
+
+  // Login via API and get tokens
+  const loginRes = await apiContext.post('/api/v1/auth/login', {
+    data: { email: E2E_EMAIL, password: E2E_PASSWORD },
+  })
+  if (!loginRes.ok()) {
+    throw new Error(`Login failed: ${loginRes.status()} ${await loginRes.text()}`)
+  }
+  const { user, tokens } = await loginRes.json()
   await apiContext.dispose()
 
-  const browser = await chromium.launch()
-  const page = await browser.newPage()
-  await page.goto(`${BASE_URL}/login`)
-  await page.getByLabel(/이메일/i).fill(E2E_EMAIL)
-  await page.getByLabel(/비밀번호/i).fill(E2E_PASSWORD)
-  await page.getByRole('button', { name: /로그인/i }).click()
-  await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 15000 })
-  await page.context().storageState({ path: AUTH_FILE })
-  await browser.close()
+  // Write Playwright storage state with Zustand auth persisted in localStorage
+  const storageState = {
+    cookies: [],
+    origins: [
+      {
+        origin: BASE_URL,
+        localStorage: [
+          {
+            name: 'erdsketch-auth',
+            value: JSON.stringify({
+              state: { user, tokens, isAuthenticated: true },
+              version: 0,
+            }),
+          },
+        ],
+      },
+    ],
+  }
+  fs.writeFileSync(AUTH_FILE, JSON.stringify(storageState, null, 2))
+  console.log(`[global-setup] Auth state saved to ${AUTH_FILE}`)
 }
