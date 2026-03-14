@@ -16,7 +16,6 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
-
   mail:
     host: smtp.sendgrid.net
     port: 587
@@ -28,12 +27,26 @@ spring:
           auth: true
           starttls:
             enable: true
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope: openid, profile, email
+          github:
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}
+            scope: user:email, read:user
 
 app:
   jwt:
     secret: ${JWT_SECRET}
   mail:
     from: noreply@erdsketch.fly.dev
+  oauth:
+    enabled: true
 
 management:
   endpoints:
