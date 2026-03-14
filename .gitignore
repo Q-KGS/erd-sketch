@@ -25,3 +25,4 @@ Thumbs.db
 # Local secrets (OAuth credentials, etc.)
 backend/src/main/resources/application-local.yml
 /.claude/settings.local.json
+/backend/src/main/resources/application-e2e-local.yml

@@ -114,7 +114,7 @@ Y.Map (root) → tables: Y.Map<id, Y.Map> / relationships: Y.Map / notes: Y.Map
 | `docs/PRD.md` | 전체 기능 명세, API 명세, 데이터 모델 |
 | `docs/phase/phase1.md` | Phase 1 테스트 케이스 (완료) |
 | `docs/phase/phase2.md` | Phase 2 테스트 케이스 (완료) |
-| `docs/phase/phase3.md` | Phase 3 테스트 케이스 |
-| `docs/phase/phase4.md` | Phase 4 테스트 케이스 |
-| `docs/phase/phase5.md` | Phase 5 테스트 케이스 |
+| `docs/phase/phase3.md` | Phase 3 테스트 케이스 (완료) |
+| `docs/phase/phase4.md` | Phase 4 테스트 케이스 (완료) |
+| `docs/phase/phase5.md` | Phase 5 테스트 케이스 (완료) |
 | `docker-compose.yml` | 로컬 개발용 PostgreSQL 등 인프라 |
